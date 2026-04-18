@@ -1,1 +1,6 @@
 external-sources=true
+severity=style
+shell=bash
+disable=SC2015,SC2164
+enable=add-default-probes,quote-safe-variables,require-variable-braces
+extended-analysis=true
