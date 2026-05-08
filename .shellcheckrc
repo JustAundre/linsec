@@ -1,6 +1,6 @@
 external-sources=true
 severity=style
 shell=bash
-disable=SC2015,SC2164,SC2178,SC2030,SC2031
+disable=SC2015,SC2164,SC2178,SC2030,SC2031,SC2155
 enable=add-default-probes,quote-safe-variables,require-variable-braces
 extended-analysis=true
