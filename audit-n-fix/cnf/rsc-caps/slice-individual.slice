@@ -1,0 +1,12 @@
+[Slice]
+# Caps individual users at 1G of memory
+MemoryMax=foo
+
+# Caps individual users at 40% of the CPU
+CPUQuota=bar
+
+# Caps individual users at 512 processes
+TasksMax=512
+
+# Everyone has equal CPU weight inside the shared pool
+CPUWeight=100

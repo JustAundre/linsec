@@ -1,0 +1,10 @@
+## Monitor all executions
+-a always,exit -F arch=b64 -S execve -k execution_monitor
+-a always,exit -F arch=b32 -S execve -k execution_monitor
+
+## Monitor file modifications
+-a always,exit -F arch=b64 -S write,rename,chmod,chown -k file_mods
+-a always,exit -F arch=b32 -S write,rename,chmod,chown -k file_mods
+
+## Lock the configuration
+-e 2

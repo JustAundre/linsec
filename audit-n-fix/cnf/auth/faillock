@@ -1,0 +1,6 @@
+Name: Lockout on failed logins
+Default: yes
+Priority: 0
+Auth-Type: Primary
+Auth:
+	[default=die]	pam_faillock.so	 authfail	deny=5  unlock_time=900

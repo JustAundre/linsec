@@ -1,0 +1,12 @@
+[Slice]
+# Caps the entire userland at 2G of memory
+MemoryMax=foo
+
+# Caps the entire userland at 80% of the CPU
+CPUQuota=bar
+
+# Caps the entire userland at 2048 processes
+TasksMax=2048
+
+# Users have reduced priority than the system
+CPUWeight=70
