@@ -1,0 +1,64 @@
+#
+# Default Configurations
+#
+[DEFAULT]
+# Don't ban localhost
+ignoreip  = 127.0.0.1/8 ::1
+#
+# Use correct backend
+banaction = firewallcmd-rich-rules
+backend   = systemd
+#
+# Ban for 8 hours
+bantime   = 8h
+#
+# Look for 5 failures in a 10-minute window
+findtime  = 10m
+maxretry  = 5
+
+
+
+
+
+#
+# Repeat Offense Handling
+#
+# Enable recidive
+[recidive]
+enabled   = true
+logpath   = /var/log/fail2ban.log
+filter    = recidive
+#
+# If they get banned 2 times in a single day...
+findtime  = 1d
+maxretry  = 2
+#
+# ...ban them for 3 days
+bantime   = 3d
+protocol  = tcp
+action    = %(action_)s
+
+
+
+
+
+#
+# Watch SSHD
+#
+[sshd]
+enabled   = true
+filter    = sshd[mode=aggressive]
+action    = %(action_)s
+
+
+
+
+
+#
+# WWW Server Template
+#
+# Uncomment to use
+# [www]
+#
+# Replace foo.bar with the service unit file of your web server
+# journalmatch = _SYSTEMD_UNIT=foo.bar
