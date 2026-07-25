@@ -149,7 +149,7 @@ cat <<-EOF
 	Here are the log files from this session:
 EOF
 if [[ -n "${log_files[*]}" ]]
-then echo "${log_files[@]}" | xargs -n1 echo "${path}"
+then printf '%s\n' "${log_files[@]}"
 else log w 'No logs found.'
 fi
 exit 0
