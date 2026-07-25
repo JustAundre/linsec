@@ -7,9 +7,8 @@
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
 #
 # Add library commands to PATH
-[[ -d "$(pwd)/lib" ]] &&
-	declare -rx PATH="$(pwd)/../lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin" ||
-	exit 69
+[[ -d "$(pwd)/../lib" ]] || exit 69
+declare -rx PATH="$(pwd)/../lib:${PATH}"
 #
 # Secure UMASK
 umask 077
