@@ -3,7 +3,7 @@ log i 'The recommended method of viewing generated log files is using the "less 
 #
 # Review non-ascii paths
 mapfile -td '' naps < <(
-	xfind / -mindepth 1 ! -iregex '^[\x00-\x7F\n]+$' -xdev -print0 \
+	find / -xephem -mindepth 1 ! -iregex '^[\x00-\x7F\n]+$' -xdev -print0 \
 		-exec pause + \
 		-exec select_fix {} \; |
 			tee "non-ascii-paths-${session_id}.log"
@@ -11,7 +11,7 @@ mapfile -td '' naps < <(
 #
 # Review hyphen-initiated paths
 mapfile -td '' hips < <(
-	xfind / -mindepth 1 -name '-*' -xdev -print0 \
+	find / -xephem -mindepth 1 -name '-*' -xdev -print0 \
 		-exec log w 'There are paths on your system which begin with 1 or more hyphens.' + \
 		-exec pause + \
 		-exec select_fix {} \; |

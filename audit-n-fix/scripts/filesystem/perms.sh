@@ -2,7 +2,7 @@
 # Invalidities
 #
 # Map out files /w broken ownership.
-mapfile -d '' paths < <(xfind / -xdev \( -nouser -o -nogroup \) -print0)
+mapfile -d '' paths < <(find / -xephem \( -nouser -o -nogroup \) -print0)
 for path in "${paths[@]}"; do (
 	# Verbosity: note invalidities, their type, and the UID/GID.
 	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && invalid_type+=UID
@@ -15,7 +15,7 @@ for path in "${paths[@]}"; do (
 ) done
 #
 # Remove invalid symlinks
-xfind / -xdev -xtype l -exec log i '{} is a broken symlink; removing...' \; -exec unlink {} +
+find / -xephem  -xtype l -exec log i '{} is a broken symlink; removing...' \; -exec unlink {} +
 #
 # Ensure FHS temp directories are world-writable /w sticky-bit.
 perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
@@ -28,7 +28,7 @@ perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 # Abiguous Path Audit
 #
 # Prompt for manual review for paths in /etc/ which aren't owned by a system user.
-mapfile -d '' paths < <(xfind /etc \( ! -group 0 -o ! -user 0 \) -print0)
+mapfile -d '' paths < <(find /etc -xephem \( ! -group 0 -o ! -user 0 \) -print0)
 for path in "${paths[@]}"; do
 	# If the owners are system users/groups, it's probably fine.
 	if [[ "$(stat -c %g "${path}")" -ge 1000 || "$(stat -c %u "${path}")" -ge 1000 ]]
@@ -38,7 +38,7 @@ for path in "${paths[@]}"; do
 done
 #
 # Prompt for manual review for paths which are world-writable.
-mapfile -d '' -a paths < <(xfind / -xdev -perm -0002 -print0)
+mapfile -d '' -a paths < <(find / -xephem -perm -0002 -print0)
 for path in "${paths[@]}"; do
 	select_fix "${path}"
 done
@@ -94,7 +94,7 @@ find /etc/ssh -type d -exec perm_fix -m 700 -o 0 -g 0 {} +
 find /etc/ssh -name '*.pub' -type f -exec perm_fix -m 644 -o 0 -g 0 {} +
 #
 # Secure MOTD/banners are secured
-perm_fix /etc/issue /etc/issue.net /etc/motd -m 644 -o 0 -g 0
+perm_fix -m 644 -o 0 -g 0 /etc/issue /etc/issue.net /etc/motd
 #
 # Secure logging directory
 perm_fix -m 755 -o 0 -g 0 /var/log
