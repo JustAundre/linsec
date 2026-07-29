@@ -6,9 +6,11 @@
 # Source global functions and variables.
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
 #
-# Add library commands to PATH
-[[ -d "$(pwd)/../lib" ]] || exit 69
-declare -rx PATH="$(pwd)/../lib:${PATH}"
+# Source library commands
+[[ -d "$(pwd)/../lib/" ]] || exit 69
+for function in "$(pwd)/../lib/"*".sh"; do
+	source "${function}"
+done
 #
 # Secure UMASK
 umask 077
@@ -32,8 +34,8 @@ set -o pipefail
 #
 # Load the PATH variable into an array
 # Load all executables in the PATH into an array
-mapfile -td : paths < <(printf '%s' "${PATH}")
-mapfile -td '' binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -printf0)
+mapfile -td ':' paths < <(printf '%s' "${PATH}")
+mapfile -td '' binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -print0)
 #
 # Load all interactive users into an array
 # Load all non-interactvie users into an array
@@ -96,7 +98,7 @@ fi
 declare -A options
 while read -r script; do
 	options["$(basename "${script}"): $(grep '^### ' "${script}" | sed 's/### //')"]="${script}"
-done < <(find sys svc -name '*.sh')
+done < <(find scripts -name '*.sh')
 #
 # List them off--select 1.
 script="${options["$(checklist -t 'Choose a script to run' "${!options[@]}")"]}"
@@ -106,7 +108,7 @@ if [[ -x "${script}" ]]; then
 	session_id=1
 	while compgen -G "*-${session_id}.log" >/dev/null; do (( session_id++ )) done
 	main_log="logs/$(basename "${script}" | sed 's/.sh//g')-${session_id}.log"
-	touch "${main_log}"
+	mkdir -p "$(dirname -- "${main_log}")" && >>"${main_log}"
 	exec &> >(tee -a "${main_log}")
 	#
 	# Execute the script
