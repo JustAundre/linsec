@@ -3,7 +3,7 @@
 #
 # Baseline /etc/systemd/system/ from /lib/systemd/system/
 log i 'Baselining "/etc/systemd/system/" from "/lib/systemd/system/"...'
-mapfile -d '' paths < <(find /etc/systemd/system -maxdepth 1 -mindepth 1 -print0)
+mapfile -td '' paths < <(find /etc/systemd/system -maxdepth 1 -mindepth 1 -print0)
 for svc_path in "${paths[@]}"; do
 	# Handle symlinks
 	if [[ -h "${svc_path}" ]]; then
