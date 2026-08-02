@@ -3,7 +3,6 @@
 #
 # Prompt for users to ...
 # Delete, remove password, lock, reshell, reUID & regroup.
-(
 preprompt_msg="$(for user in "${all_users[@]}"; do
 	id -a "${user}"
 done)"
@@ -13,7 +12,7 @@ mapfile -t users_lock < <(checklist -mt 'Select users to lock' "${all_users[@]}"
 mapfile -t users_reshell < <(checklist -mt 'Select users to select a new shell for' "${all_users[@]}")
 mapfile -t users_reuid < <(checklist -mt 'Select users to assign a new UID' "${all_users[@]}")
 mapfile -t users_regroup < <(checklist -mt 'Select users to reassign groups for' "${all_users[@]}")
-)
+unset preprompt_msg
 
 
 
@@ -28,23 +27,31 @@ mapfile -t users_regroup < <(checklist -mt 'Select users to reassign groups for'
 # Prompt to change the shell for users flagged to be reshelled.
 # Prompt to change the UID of users flagged to be reUIDed.
 # Promot to change the primary & supplementary groups of users flagged to be regrouped.
-for u in "${users_del[@]}"; do userdel -rf "${u}"; done
-for u in "${users_nullpass[@]}"; do passwd "${u}" -d; done
-for u in "${users_lock[@]}"; do passwd "${u}" -l; done
+for u in "${users_del[@]}"; do
+	userdel -rf "${u}" && log i "Successfully deleted user \"${u}\"."
+done
+for u in "${users_nullpass[@]}"; do
+	passwd "${u}" -d && log i "Successfully unset password for user \"${u}\"."
+done
+for u in "${users_lock[@]}";
+	do passwd "${u}" -l && log i "Successfully locked user \"${u}\"."
+done
 for u in "${users_reshell[@]}"; do
 	while [[ ! -x "${shell}" ]]; do
-		read -erp 'Enter the path to the new shell: ' shell;
+		read -erp 'Enter the path to the new shell: ' shell
 	done
-	usermod -s "${shell}" "${u}"
+	usermod -s "${shell}" "${u}" && log i "Successfully changed shell for user \"${u}\"."
+	unset shell
 done
 for u in "${users_reuid[@]}"; do
 	while
-		[[ "${uid}" =~ ^[0-9]+$ ]] &&
+		[[ ! "${uid}" =~ ^[0-9]+$ ]] ||
 		getent passwd "${uid}" /etc/passwd &>/dev/null
 	do
 		read -erp 'Enter the new UID: ' uid
 	done
-	usermod -s "${uid}" "${u}"
+	usermod -u "${uid}" "${u}" && log i "Successfully changed UID of \"${u}\" to ${uid}."
+	unset uid
 done
 for u in "${users_regroup[@]}"; do
 	# Prompt for the new primary group
@@ -58,15 +65,16 @@ for u in "${users_regroup[@]}"; do
 	# Prompt for the new supplementary groups
 	while [[ -z "${stop}" ]]; do
 		read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
-		stop=i
+		stop=true
 		for group in "${supplemental_groups[@]}"; do
 			grep -qE "^[^:]+:[^:]+:${group}" /etc/group || unset stop
 		done
 	done
 	#
 	# Change the groups
-	usermod -g "${primary_group}" "${u}"
-	usermod -G "${supplemental_groups[*]// /,}" "${u}"
+	usermod -g "${primary_group}" "${u}" && log i "Successfully changed primary group for user \"${u}\" to \"${primary_group}\"."
+	usermod -G "${supplemental_groups[*]// /,}" "${u}" log i "Successfully changed supplementary groups for user \"${u}\" to \"${supplemental_groups[*]// /,}\"."
+	unset primary_group supplemental_groups
 done
 #
 # Secures root user
