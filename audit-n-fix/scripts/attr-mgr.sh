@@ -2,6 +2,7 @@
 # Attribute Manager
 #
 # Act based on selected mode
+# TODO: FIX WHITESAPCE SAFETY
 options=(
 	remove
 	restore
