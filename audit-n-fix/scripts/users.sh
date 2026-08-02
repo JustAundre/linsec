@@ -33,8 +33,8 @@ done
 for u in "${users_nullpass[@]}"; do
 	passwd "${u}" -d && log i "Successfully unset password for user \"${u}\"."
 done
-for u in "${users_lock[@]}";
-	do passwd "${u}" -l && log i "Successfully locked user \"${u}\"."
+for u in "${users_lock[@]}"; do
+	passwd "${u}" -l && log i "Successfully locked user \"${u}\"."
 done
 for u in "${users_reshell[@]}"; do
 	while [[ ! -x "${shell}" ]]; do
@@ -73,7 +73,7 @@ for u in "${users_regroup[@]}"; do
 	#
 	# Change the groups
 	usermod -g "${primary_group}" "${u}" && log i "Successfully changed primary group for user \"${u}\" to \"${primary_group}\"."
-	usermod -G "${supplemental_groups[*]// /,}" "${u}" log i "Successfully changed supplementary groups for user \"${u}\" to \"${supplemental_groups[*]// /,}\"."
+	usermod -G "${supplemental_groups[*]// /,}" "${u}" && log i "Successfully changed supplementary groups for user \"${u}\" to \"${supplemental_groups[*]// /,}\"."
 	unset primary_group supplemental_groups
 done
 #

@@ -31,7 +31,7 @@ if hash sddm; then
 	# Disable automatic login
 	reconfig User '' /etc/sddm.conf
 	reconfig Session '' /etc/sddm.conf
-	
+
 	# Hide the user list
 	reconfig HideUsers '' /etc/sddm.conf
 	reconfig DisableDebug true /etc/sddm.conf
