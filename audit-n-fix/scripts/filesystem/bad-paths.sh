@@ -1,19 +1,19 @@
-log i 'Scanning for filepaths allowed by the Linux kernel but which may cause unexpected behavior...'
-log i 'The recommended method of viewing generated log files is using the "less -R" command or "cat -A".'
-#
-# Review non-ascii paths
-mapfile -td '' naps < <(
-	find / -xephem -mindepth 1 ! -iregex '^[\x00-\x7F\n]+$' -xdev -print0 \
-		-exec pause + \
-		-exec select_fix {} \; |
-			tee "non-ascii-paths-${session_id}.log"
+# Review nodes containing non-ASCII characters
+mapfile -td '' has_non_ascii < <(
+	find / -xephem -mindepth 1 ! -iregex '^[\x00-\x7F\n]+$' -print0 |
+		tee "non-ascii-paths-${session_id}.log"
 )
+for node in "${has_non_ascii[@]}"; do
+	pause
+	select_fix "${node}"
+done
 #
-# Review hyphen-initiated paths
-mapfile -td '' hips < <(
-	find / -xephem -mindepth 1 -name '-*' -xdev -print0 \
-		-exec log w 'There are paths on your system which begin with 1 or more hyphens.' + \
-		-exec pause + \
-		-exec select_fix {} \; |
-			tee "hyphen-initiated-paths-${session_id}.log"
+# Review nodes leading with a hyphen
+mapfile -td '' leading_hyphen < <(
+	find / -xephem -mindepth 1 -name '-*' -print0 |
+		tee "leading-hyphen-${session_id}.log"
 )
+for node in "${leading_hyphen[@]}"; do
+	pause
+	select_fix "${node}"
+done
