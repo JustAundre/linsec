@@ -8,7 +8,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
 #
 # Source library commands
 [[ -d "$(pwd)/../lib/" ]] || exit 69
-for function in "$(pwd)/../lib/"*".sh"; do
+for function in "$(pwd)/../lib/"*; do
 	source "${function}"
 done
 #
@@ -129,10 +129,8 @@ fi
 #
 # Exit
 #
-# Fetch log files
-# Clear the screen
-# Print the summary
-mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*${session_id}.log")
+# Fetch log files, clear the screen, & print the summary.
+mapfile -t log_files < <(timeout 5 find ./logs -maxdepth 1 -type f -name "*${session_id}.log")
 clear
 cat <<-EOF
 	  ---{=========}###[@]###{===========}---
