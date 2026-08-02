@@ -7,10 +7,10 @@ until [[ "${pass}" == true ]]; do
 	"${EDITOR}" cnf/rsc-caps/limits.conf
 	while read -r 'field[0]' 'field[1]' 'field[2]' 'field[3]' 'field[4]'; do
 		# Validate the identifier field
-		# TODO
+		# TODO: VALIDATE OTHER FIELDS
 		if [[ "${field[0]}" =~ ^@[0-9]+(:[0-9]+)?$ || "${field[0]}" =~ ^[0-9]+(:[0-9]+)?$ || "${field[0]}" == '*' ]]; then :
-		elif [[ "${field[0]}" =~ ^[@%]([a-zA-Z_-.]{1,32})$ ]] && getent group "${BASH_REMATCH[1]}" &>/dev/null; then :
-		elif [[ "${field[0]}" =~ ^([a-zA-Z_-.]{1,32})$ ]] && getent passwd "${BASH_REMATCH[1]}" &>/dev/null; then :
+		elif [[ "${field[0]}" =~ ^[@%]([a-zA-Z_.-]{1,32})$ ]] && getent group "${BASH_REMATCH[1]}" &>/dev/null; then :
+		elif [[ "${field[0]}" =~ ^([a-zA-Z_.-]{1,32})$ ]] && getent passwd "${BASH_REMATCH[1]}" &>/dev/null; then :
 		else
 			pass=false
 			break
