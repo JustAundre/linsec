@@ -25,9 +25,9 @@ done
 #
 # Delete /etc/update-motd.d/?
 [[ -d /etc/update-motd.d/ ]] && {
-log i <<-EOF
-	Files in "/etc/update-motd.d/" may leak information; here's all the files found in the directory:
-	$(find /etc/update-motd.d/ -print0 | xargs -0n1 printf '    %s\n')
-EOF
-confirm 'Delete /etc/update-motd.d/ and its contents' && rm -rfv /etc/update-motd.d/
+	log i <<-EOF
+		Files in "/etc/update-motd.d/" may leak information; here's all the files found in the directory:
+		$(find /etc/update-motd.d/ -print0 | xargs -0n1 printf '    %s\n')
+	EOF
+	confirm 'Delete /etc/update-motd.d/ and its contents' && rm -rfv /etc/update-motd.d/
 }

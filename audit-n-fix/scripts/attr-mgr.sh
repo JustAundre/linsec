@@ -12,7 +12,9 @@ if [[ "$(checklist -t 'Remove/restore immutable and append-only attributes' "${o
 	log i $'This will take a second; if you ask, no the script didn\'t hang.'
 	#
 	# Removes the (i)mmutable & (a)ppend-only attributes from all files
-	find / -xephem -type f -exec lsattr -d {} + 2>/dev/null | while read -r attrs file; do
+	while IFS= read -rd '' file; do
+		lsattr -d -- "${file}" 2>/dev/null
+	done < <(find / -xephem -type f -print0) | while read -r attrs file; do
 		if [[ "${attrs}" == *i* ]]; then
 			echo "${file}" >>immutable-files.txt
 			log i "Found immutable file: ${file}"

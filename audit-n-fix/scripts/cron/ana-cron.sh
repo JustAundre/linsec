@@ -1,3 +1,7 @@
+#
+# Anacron & Cron Jobs
+#
+# Locate scheduled task files, prompt to review/edit each, then enqueue for removal
 mapfile -td '' cron_files < <(find /etc/cron* /var/spool/anacron/cron* /etc/anacrontab -type f)
 
 if [[ "${#cron_files[@]}" -ge 1 ]]; then

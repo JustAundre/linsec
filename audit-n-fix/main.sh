@@ -27,19 +27,14 @@ set -o pipefail
 
 
 
-
-
 #
 # Helper Variables
 #
-# Load the PATH variable into an array
-# Load all executables in the PATH into an array
+# Load the PATH variable into an array, then all executables in the PATH into an array
 mapfile -td ':' paths < <(printf '%s' "${PATH}")
 mapfile -td '' binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -print0)
 #
-# Load all interactive users into an array
-# Load all non-interactvie users into an array
-# Load all users into an array
+# Load all interactive, non-interactvie, and all users into their respective arrays
 mapfile -t int_users < <(
 	grep -vE '/(nologin|false|true)$' /etc/passwd |
 		awk -F: '$3 >= 1000 { print $1 }'

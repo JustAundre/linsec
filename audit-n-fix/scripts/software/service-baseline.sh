@@ -39,10 +39,11 @@ for svc_path in "${paths[@]}"; do
 		if [[ "${svc_path}" == *.d ]]; then
 			log i "${svc_path} is just an overrides directory."
 		else
-			confirm "${svc_path} doesn't end in .d; review its contents" && find "${svc_path}" -type f \
-				-exec "${EDITOR}" {} \; \
-				-exec rm -vi {} \; \
-				</dev/tty
+			confirm "${svc_path} doesn't end in \".d\"; review its contents" &&
+				while IFS= read -rd '' file <&3; do
+					"${EDITOR}" "${file}"
+					rm -vi "${file}"
+				done 3< <(find "${svc_path}" -type f -print0) </dev/tty
 		fi
 		[[ -z "$(find "${svc_path}" -mindepth 1)" ]] && rm -vdi "${svc_path}"
 	#

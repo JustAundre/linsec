@@ -148,19 +148,19 @@ done
 #
 # Some distros use the adm user for these logs
 (
-auditd_log_dir="$(dirname "$(awk -F\= '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
-if [[ "${os_info[ID]}" =~ ^(ubuntu|almalinux)$ && -td "${auditd_log_dir}" ]]; then
-	mapfile -td '' paths < <(find "${auditd_log_dir}" -type f -print0)
-	for path in "${paths[@]}"; do
-		perm_fix -m 640 -o 0 -g adm "${path}"
-	done
-else
-	mapfile -td '' paths < <(find "${auditd_log_dir}" -type f -print0)
-	for path in "${paths[@]}"; do
-		perm_fix -m 0600 -o 0 -g 0 "${path}"
-	done
-fi
-chmod -c 0750 "${auditd_log_dir}"
+	auditd_log_dir="$(dirname "$(awk -F\= '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
+	if [[ "${os_info[ID]}" =~ ^(ubuntu|almalinux)$ && -td "${auditd_log_dir}" ]]; then
+		mapfile -td '' paths < <(find "${auditd_log_dir}" -type f -print0)
+		for path in "${paths[@]}"; do
+			perm_fix -m 640 -o 0 -g adm "${path}"
+		done
+	else
+		mapfile -td '' paths < <(find "${auditd_log_dir}" -type f -print0)
+		for path in "${paths[@]}"; do
+			perm_fix -m 0600 -o 0 -g 0 "${path}"
+		done
+	fi
+	chmod -c 0750 "${auditd_log_dir}"
 )
 
 #
