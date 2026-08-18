@@ -37,7 +37,7 @@ for u in "${users_lock[@]}"; do
 	passwd "${u}" -l && log i "Successfully locked user \"${u}\"."
 done
 for u in "${users_reshell[@]}"; do
-	while [[ ! -x "${shell}" ]]; do
+	while [[ ! -x ${shell} ]]; do
 		read -erp 'Enter the path to the new shell: ' shell
 	done
 	usermod -s "${shell}" "${u}" && log i "Successfully changed shell for user \"${u}\"."
@@ -45,7 +45,7 @@ for u in "${users_reshell[@]}"; do
 done
 for u in "${users_reuid[@]}"; do
 	while
-		[[ ! "${uid}" =~ ^[0-9]+$ ]] ||
+		[[ ! ${uid} =~ ^[0-9]+$ ]] ||
 			getent passwd "${uid}" /etc/passwd &> /dev/null
 	do
 		read -erp 'Enter the new UID: ' uid
@@ -56,14 +56,14 @@ done
 for u in "${users_regroup[@]}"; do
 	# Prompt for the new primary group
 	while
-		[[ -z "${primary_group}" ]] ||
+		[[ -z ${primary_group} ]] ||
 			getent "^[^:]+:[^:]+:${primary_group}" /etc/group &> /dev/null
 	do
 		read -erp 'Enter new primary group: ' primary_group
 	done
 	#
 	# Prompt for the new supplementary groups
-	while [[ -z "${stop}" ]]; do
+	while [[ -z ${stop} ]]; do
 		read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
 		stop=true
 		for group in "${supplemental_groups[@]}"; do

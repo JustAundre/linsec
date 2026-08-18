@@ -51,7 +51,7 @@ while IFS=\= read -r key value; do
 	value="${value%\"}"
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
-done </etc/os-release
+done < /etc/os-release
 
 
 
@@ -67,9 +67,9 @@ done </etc/os-release
 # 3. Is the active init. system SystemD?
 # 4. Is the output a terminal?
 log i 'Running environment checks...'
-if [[ -z "${BASH_SOURCE[0]}" ]]; then
+if [[ -z ${BASH_SOURCE[0]} ]]; then
 	errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
-elif [[ "${EUID}" -ne 0 ]]; then
+elif [[ ${EUID} -ne 0 ]]; then
 	errors+=("Must run as root. Try (sudo bash $0).")
 elif [[ "$(< /proc/1/comm)" != systemd ]]; then
 	errors+=('System is not using SystemD which is the only system daemon supported by this script.')
@@ -78,12 +78,12 @@ elif [[ ! -t 0 ]]; then
 fi
 #
 # If the exit variable is set, exit.
-if [[ -n "${errors[*]}" ]]; then
+if [[ ${#errors[@]} -ge 1 ]]; then
 	for error in "${errors[@]}"; do log e "${error}"; done
 	log w 'One or more startup checks failed.'
 	confirm 'Continue' || exit 69
 else
-	log i 'No errors!'
+	log i 'Passed startup checks.'
 fi
 
 
@@ -101,7 +101,7 @@ done < <(find scripts -name '*.sh')
 #
 # List them off--select 1.
 script="${options["$(checklist -t 'Choose a script to run' "${!options[@]}")"]}"
-if [[ -x "${script}" ]]; then
+if [[ -x ${script} ]]; then
 	# Find a valid file name for the log file
 	# Log to master a log file
 	session_id=1
@@ -116,8 +116,8 @@ else
 	log e <<- EOF
 		A fatal error occured:
 		    Attempted executable path - ${script}
-		    Path $([[ -f "${script}" ]] || printf 'does not') exist or is a directory.
-		    Path is $([[ -x "${script}" ]] || printf 'not') executable.
+		    Path $([[ -f ${script} ]] || printf 'does not') exist or is a directory.
+		    Path is $([[ -x ${script} ]] || printf 'not') executable.
 	EOF
 fi
 
@@ -144,11 +144,11 @@ cat <<- EOF
 	         a good password manager.
 
 	-----<============>{x}<============>-----
-	Here are the log files from this session:
 EOF
-if [[ -n "${log_files[*]}" ]]; then
+if [[ ${#log_files[@]} -ge 1 ]]; then
+	printf 'Here are the log files from this session:\n'
 	printf '%s\n' "${log_files[@]}"
 else
-	log w 'No logs found.'
+	log w "That's strange, no log files were detected."
 fi
 exit 0
