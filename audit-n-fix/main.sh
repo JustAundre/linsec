@@ -43,7 +43,7 @@ mapfile -t nonint_users < <(
 	grep -E '/(nologin|false|true)$' /etc/passwd |
 		awk -F: '$3 < 1000 { print $1 }'
 )
-mapfile -t all_users < <(cut -d: -f1 </etc/passwd)
+mapfile -t all_users < <(cut -d: -f1 < /etc/passwd)
 #
 # Store OS details in an associative array.
 declare -A os_info
@@ -51,7 +51,7 @@ while IFS=\= read -r key value; do
 	value="${value%\"}"
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
-done </etc/os-release
+done < /etc/os-release
 
 
 
@@ -67,19 +67,23 @@ done </etc/os-release
 # 3. Is the active init. system SystemD?
 # 4. Is the output a terminal?
 log i 'Running environment checks...'
-if [[ -z "${BASH_SOURCE[0]}" ]]; then errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
-elif [[ "${EUID}" -ne 0 ]]; then errors+=("Must run as root. Try (sudo bash $0).")
-elif [[ "$(</proc/1/comm)" != systemd ]]; then errors+=('System is not using SystemD which is the only system daemon supported by this script.')
-elif [[ ! -t 0 ]]; then errors+=('All scripts here require an interactive terminal.')
+if [[ -z ${BASH_SOURCE[0]} ]]; then
+	errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
+elif [[ ${EUID} -ne 0 ]]; then
+	errors+=("Must run as root. Try (sudo bash $0).")
+elif [[ "$(< /proc/1/comm)" != systemd ]]; then
+	errors+=('System is not using SystemD which is the only system daemon supported by this script.')
+elif [[ ! -t 0 ]]; then
+	errors+=('All scripts here require an interactive terminal.')
 fi
 #
 # If the exit variable is set, exit.
-if [[ -n "${errors[*]}" ]]; then
+if [[ ${#errors[@]} -ge 1 ]]; then
 	for error in "${errors[@]}"; do log e "${error}"; done
 	log w 'One or more startup checks failed.'
 	confirm 'Continue' || exit 69
 else
-	log i 'No errors!'
+	log i 'Passed startup checks.'
 fi
 
 
@@ -97,23 +101,23 @@ done < <(find scripts -name '*.sh')
 #
 # List them off--select 1.
 script="${options["$(checklist -t 'Choose a script to run' "${!options[@]}")"]}"
-if [[ -x "${script}" ]]; then
+if [[ -x ${script} ]]; then
 	# Find a valid file name for the log file
 	# Log to master a log file
 	session_id=1
-	while compgen -G "*-${session_id}.log" >/dev/null; do (( session_id++ )) done
+	while compgen -G "*-${session_id}.log" > /dev/null; do ((session_id++)); done
 	main_log="logs/$(basename "${script}" | sed 's/.sh//g')-${session_id}.log"
-	mkdir -p "$(dirname -- "${main_log}")" && : >>"${main_log}"
+	mkdir -p "$(dirname -- "${main_log}")" && : >> "${main_log}"
 	exec &> >(tee -a "${main_log}")
 	#
 	# Execute the script
 	. "${script}"
 else
-	log e <<-EOF
+	log e <<- EOF
 		A fatal error occured:
 		    Attempted executable path - ${script}
-		    Path $([[ -f "${script}" ]] || printf 'does not') exist or is a directory.
-		    Path is $([[ -x "${script}" ]] || printf 'not') executable.
+		    Path $([[ -f ${script} ]] || printf 'does not') exist or is a directory.
+		    Path is $([[ -x ${script} ]] || printf 'not') executable.
 	EOF
 fi
 
@@ -127,7 +131,7 @@ fi
 # Fetch log files, clear the screen, & print the summary.
 mapfile -t log_files < <(timeout 5 find ./logs -maxdepth 1 -type f -name "*${session_id}.log")
 clear
-cat <<-EOF
+cat <<- EOF
 	  ---{=========}###[@]###{===========}---
 	        WINDOWS AT LOSS AT THE
 	           AGAPE FREEDOM OF LINUX
@@ -140,10 +144,11 @@ cat <<-EOF
 	         a good password manager.
 
 	-----<============>{x}<============>-----
-	Here are the log files from this session:
 EOF
-if [[ -n "${log_files[*]}" ]]
-then printf '%s\n' "${log_files[@]}"
-else log w 'No logs found.'
+if [[ ${#log_files[@]} -ge 1 ]]; then
+	printf 'Here are the log files from this session:\n'
+	printf '%s\n' "${log_files[@]}"
+else
+	log w "That's strange, no log files were detected."
 fi
 exit 0
