@@ -12,8 +12,7 @@ for svc_path in "${paths[@]}"; do
 			confirm "${svc_path} is a broken symlink. Remove" &&
 			unlink "${svc_path}"
 		#
-		# Checks if a service is a symlink to a file in
-		# /lib/systemd/system/ or /usr/lib/systemd/system/.
+		# Checks if a service is a symlink to a file in /lib/systemd/system/ or /usr/lib/systemd/system/.
 		real_path="$(readlink "${svc_path}")"
 		if [[
 			"${real_path}" == /lib/systemd/system/* ||
@@ -24,8 +23,6 @@ for svc_path in "${paths[@]}"; do
 		elif [[ "${real_path}" == /dev/null ]]; then
 			log i "${svc_path} is a masked service pointing to /dev/null."
 		else
-			# Never actually seen this happen,
-			# which makes it all the more suspicious if it does occur.
 			if confirm "Unusual symlink; ${svc_path} points to ${real_path}. Review"; then
 				"${EDITOR}" "${real_path}"
 				confirm "Delete the symlink pointing from ${svc_path} to ${real_path}" && unlink "${svc_path}"
@@ -34,7 +31,6 @@ for svc_path in "${paths[@]}"; do
 		fi
 	#
 	# Handle directories
-	# Delete the directory if it is empty.
 	elif [[ -d "${svc_path}" ]]; then
 		if [[ "${svc_path}" == *.d ]]; then
 			log i "${svc_path} is just an overrides directory."
@@ -47,8 +43,7 @@ for svc_path in "${paths[@]}"; do
 		fi
 		[[ -z "$(find "${svc_path}" -mindepth 1)" ]] && rm -vdi "${svc_path}"
 	#
-	# Prompt to audit files
-	# If yes; audit files, then ask whether to delete the file.
+	# Prompt to audit files. If yes, audit files then ask for whether to delete the file.
 	elif [[ -f "${svc_path}" ]] && confirm "${svc_path} is a real file located in /etc/systemd/system/—may be a custom service. Review"; then
 		"${EDITOR}" "${svc_path}"
 		rm -vi "${svc_path}"
