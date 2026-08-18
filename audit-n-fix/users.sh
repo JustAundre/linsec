@@ -46,7 +46,7 @@ done
 for u in "${users_reuid[@]}"; do
 	while
 		[[ ! "${uid}" =~ ^[0-9]+$ ]] ||
-		getent passwd "${uid}" /etc/passwd &>/dev/null
+			getent passwd "${uid}" /etc/passwd &> /dev/null
 	do
 		read -erp 'Enter the new UID: ' uid
 	done
@@ -57,7 +57,7 @@ for u in "${users_regroup[@]}"; do
 	# Prompt for the new primary group
 	while
 		[[ -z "${primary_group}" ]] ||
-		getent "^[^:]+:[^:]+:${primary_group}" /etc/group &>/dev/null
+			getent "^[^:]+:[^:]+:${primary_group}" /etc/group &> /dev/null
 	do
 		read -erp 'Enter new primary group: ' primary_group
 	done
