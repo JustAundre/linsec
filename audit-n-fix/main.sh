@@ -4,7 +4,7 @@
 #
 # CD into the script's parent directory;
 # Source global functions and variables.
-cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
+cd "$(dirname "${0}")" || exit 69
 #
 # Source library commands
 [[ -d "../lib/" ]] || exit 69
@@ -60,19 +60,21 @@ done < /etc/os-release
 #
 # Environment Check
 #
-# Alert the user of the checks to avoid an invisible hang
-# Start the check
-# 1. Is this running in Bash & NOT sourced?
-# 2. Does this script have root permissions?
-# 3. Is the active init. system SystemD?
-# 4. Is the output a terminal?
 log i 'Running environment checks...'
+#
+# 1. Is this running in Bash & NOT sourced?
 if [[ -z ${BASH_SOURCE[0]} ]]; then
 	errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
+#
+# 2. Does this script have root permissions?
 elif [[ ${EUID} -ne 0 ]]; then
-	errors+=("Must run as root. Try (sudo bash $0).")
+	errors+=("Must run as root. Try (sudo bash ${0}).")
+#
+# 3. Is the active init. system SystemD?
 elif [[ "$(< /proc/1/comm)" != systemd ]]; then
 	errors+=('System is not using SystemD which is the only system daemon supported by this script.')
+#
+# 4. Is the output a terminal?
 elif [[ ! -t 0 ]]; then
 	errors+=('All scripts here require an interactive terminal.')
 fi
