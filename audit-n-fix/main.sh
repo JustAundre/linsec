@@ -7,9 +7,9 @@
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
 #
 # Source library commands
-[[ -d "$(pwd)/../lib/" ]] || exit 69
-for function in "$(pwd)/../lib/"*; do
-	source "${function}"
+[[ -d "../lib/" ]] || exit 69
+for function in "../lib/"*; do
+	. "${function}"
 done
 #
 # Secure UMASK
@@ -103,7 +103,7 @@ if [[ -x "${script}" ]]; then
 	session_id=1
 	while compgen -G "*-${session_id}.log" >/dev/null; do (( session_id++ )) done
 	main_log="logs/$(basename "${script}" | sed 's/.sh//g')-${session_id}.log"
-	mkdir -p "$(dirname -- "${main_log}")" && >>"${main_log}"
+	mkdir -p "$(dirname -- "${main_log}")" && : >>"${main_log}"
 	exec &> >(tee -a "${main_log}")
 	#
 	# Execute the script
