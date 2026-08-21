@@ -4,43 +4,25 @@ Ensure SSHD's integrity; if possible, completely purge it from the system and th
 
 ## Binary Integrity
 
-1. Uninstall SSHD
+1. Reinstall SSHD
 
 <small>(OS-dependant commands)</small>
 
 ```bash
 # For Debian and its derivatives:
-sudo apt autopurge openssh-server
+sudo apt-get install --reinstall openssh-server
 
 # For modern Redhat systems and their derivatives:
-sudo dnf remove openssh-server
+sudo dnf reinstall openssh-server
 
 # For legacy Redhat systems and their derivatives:
-sudo yum remove openssh-server
+sudo yum reinstall openssh-server
 
 # For Arch and its derivatives:
-sudo pacman -Rns openssh-server
+sudo pacman -S openssh
 ```
 
-2. Reinstall it
-
-<small>(OS-dependant commands)</small>
-
-```bash
-# For Debian and its derivatives:
-sudo apt install openssh-server
-
-# For modern Redhat systems and their derivatives:
-sudo dnf install openssh-server
-
-# For legacy Redhat systems and their derivatives:
-sudo yum install openssh-server
-
-# For Arch and its derivatives:
-sudo pacman -Sy openssh-server
-```
-
-## Configuration & Secrets
+## Configuration & Host Keys
 
 1. Purge SSH files
 
@@ -71,6 +53,6 @@ ssh-keygen -f /root/.ssh/known_hosts -R localhost
 - Enable or disable Kerberos, GSSAPI, and password authentication as needed to your use-case
 - Disable agent, X11, TCP forwarding, and SFTP subsystem*
 
-\* Handled in the template 
+\* Handled in the template
 
 <small>Pre-adjusted template `/etc/ssh/sshd_config` found at `audit-n-fix/scripts/cnf/sshd_config` for your convenience.</small>
