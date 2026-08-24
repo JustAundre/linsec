@@ -1,32 +1,28 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
-# shellcheck shell=bash
+#!/usr/bin/env bash
 #
 # Setup
-#
-# End script on error, error if called missing variable, error if a part of a pipeline errors.
-set -euo pipefail
 #
 # Script Variables
 vsftpdConfig="/etc/vsftpd.conf"
 backup="/etc/vsftpd.conf.bak"
 certDir=/etc/ssl/private
-certFile="$certDir/vsftpd.pem"
+certFile="${certDir}/vsftpd.pem"
 #
 # A function to apply VSFTPD configurations
 set_vsftpd_config() {
-	local key="$1"
-	local value="$2"
+	local key="${1}"
+	local value="${2}"
 
-	if grep -qE "^#?\s*${key}=" "$vsftpdConfig"; then
-		sed -i "s|^\s*#\?\s*${key}=.*|${key}=${value}|" "$vsftpdConfig"
+	if grep -qE "^#?\s*${key}=" "${vsftpdConfig}"; then
+		sed -i "s|^\s*#\?\s*${key}=.*|${key}=${value}|" "${vsftpdConfig}"
 	else
-		echo "${key}=${value}" >>"$vsftpdConfig"
+		echo "${key}=${value}" >> "${vsftpdConfig}"
 	fi
 }
 #
 # Backup existing configurations
-cp -p "$vsftpdConfig" "$backup"
-echo "✅: Backed up VSFTPD confugrations to $backup"
+cp -p "${vsftpdConfig}" "${backup}"
+echo "✅: Backed up VSFTPD confugrations to ${backup}"
 
 
 
@@ -35,8 +31,7 @@ echo "✅: Backed up VSFTPD confugrations to $backup"
 #
 # Install/Verify Integrity of VSFTPD
 #
-echo "🚧: Installing/reinstalling VSFTPD..."
-secure_install vsftpd openssl || exit 6
+# vsftpd openssl
 
 
 
@@ -45,10 +40,10 @@ secure_install vsftpd openssl || exit 6
 #
 # Harden VSFTPD
 #
-if ! [[ -f "$certFile" ]]; then
+if ! [[ -f "${certFile}" ]]; then
 	echo "🚧: Generating TLS certificate"
-	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$certFile" -out "$certFile" -subj "/CN=FTP Server"
-	chmod 600 "$certFile"
+	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "${certFile}" -out "${certFile}" -subj "/CN=FTP Server"
+	chmod 600 "${certFile}"
 fi
 # Disable anonymous access
 echo "🚧: Applying secure VSFTPD configurations..."
@@ -119,38 +114,14 @@ set_vsftpd_config "require_ssl_reuse" "NO"
 #
 # Configuration Validation
 #
-echo "🚧: Validating VSFTPD configuration..."
-# vsftpd has no syntax-check flag; a valid config keeps the daemon running in the
-# foreground, so use a timeout. Exit 124 means it survived until killed (valid).
-timeout 2 vsftpd "$vsftpdConfig" &>/dev/null
+# vsftpd has no syntax-check flag; a valid config keeps the daemon running in the foreground, so use a timeout. Exit 124 means it survived until killed (valid).
+timeout 2 vsftpd "${vsftpdConfig}" &>/dev/null
 if [[ $? -eq 124 ]]; then
 	systemctl restart vsftpd
 	echo "✅: VSFTPD started securely"
 else
 	echo "❌: Configuration validation error; reverting to backup(s)..."
-	cp -p "$backup" "$vsftpdConfig"
+	cp -p "${backup}" "${vsftpdConfig}"
 	systemctl restart vsftpd
 	exit 1
 fi
-
-
-
-
-
-#
-# Firewall Configuration
-#
-echo "🚧: Adding Firewall Configurations for VSFTPD..."
-ufw allow in 20:21/tcp # Main VSFTPD ports
-ufw allow in 990/tcp # Implicit SSL
-ufw allow in 40000:40100/tcp # Passive VSFTPD ports
-
-
-
-
-
-#
-# Exit
-#
-clear
-exit 0
