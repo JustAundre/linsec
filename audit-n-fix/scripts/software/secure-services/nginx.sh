@@ -1,10 +1,9 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
+#!/usr/bin/env bash
 # shellcheck shell=bash
 #
 # Setup
 #
 # Script variables
-. ../.allrc
 nginx_main_config='/etc/nginx/nginx.conf'
 default_page='/etc/nginx/sites-available/default'
 backup_dir='/etc/nginx/backup'
@@ -125,31 +124,3 @@ else
 	cp -p "$backup_dir/default" "$default_page"
 	exit 1
 fi
-
-
-
-
-
-#
-# Firewall Configuration
-#
-# Whitelist the universal HTTP port
-echo "🚧: Adding UFW exception for default HTTP port"
-read -rp "What port(s) does your webserver use? (Type nothing for default to 80): " ports
-if [[ "$ports" =~ $numberCheck ]]; then
-	for port in $ports; do
-		ufw allow in "$port/tcp"
-	done
-else
-	ufw allow in 80/tcp
-fi
-
-
-
-
-
-#
-# Exit
-#
-clear
-exit 0

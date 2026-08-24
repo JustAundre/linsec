@@ -1,9 +1,7 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
-# shellcheck shell=bash
+#!/usr/bin/env bash
 #
 # Setup
 #
-. ../.allrc
 apache_main_config="/etc/apache2/apache2.conf"
 apache_additional_config="/etc/apache2/conf-enabled/99-apache-security.conf"
 #
@@ -141,33 +139,3 @@ else
 	'
 	exit 1
 fi
-
-
-
-
-
-#
-# Firewall Configuration
-#
-# Whitelist the universal HTTP port
-echo 'ℹ️: Space-seperated inputs required (i.e. 80 8080 4320)'
-read -rp 'What port(s) does your webserver use? (Enter nothing for defaults): ' ports
-for port in $ports; do
-	if [[ "$port" =~ $numberCheck ]]; then
-		ufw allow in "$port"/tcp && echo "✅: Exempting port ($port/tcp)"
-	else
-		echo "❌: Erroneous input at ($port) so exempting default web server port (80/tcp)."
-		ufw allow in 80/tcp
-		continue
-	fi
-done
-
-
-
-
-
-#
-# Exit
-#
-clear
-exit 0
