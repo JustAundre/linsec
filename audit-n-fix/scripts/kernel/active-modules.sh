@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Active Module Audit
 #
@@ -25,7 +31,7 @@ mapfile -t mods_disable < <(
 modprobe -r "${mods_disable[@]}"
 #
 # Disable 'em.
-perm_fix -m 644 -o 0 -g 0 /dev/null /etc/modprobe.d/hardening.conf
+perm_fix -m 644 -o 0 -g 0 /etc/modprobe.d/hardening.conf
 for mod in "${mods_disable[@]}"; do
 	echo "install ${mod} /bin/false" >>/etc/modprobe.d/hardening.conf
 done

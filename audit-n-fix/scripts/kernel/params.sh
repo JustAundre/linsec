@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Kernel Parameters
 #

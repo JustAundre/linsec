@@ -1,38 +1,34 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Display Manager
 #
 # LightDM
 if hash lightdm; then
-	# Disable guest login
-	reconfig -d \= allow-guest false /etc/lightdm/lightdm.conf
-	#
-	# Disable automatic login
-	reconfig -d \= AutomaticLogin false /etc/lightdm/lightdm.conf
-	#
-	# Disable user enumeration
-	reconfig -d \= greeter-show-manual-login true /etc/lightdm/lightdm.conf
-	reconfig -d \= greeter-hide-users true /etc/lightdm/lightdm.conf
-	#
-	# Disable remote X server login
-	reconfig -d \= xdmcp-enabled false /etc/lightdm/lightdm.conf
-	#
-	# Disable VNC/RDP access
-	reconfig -d \= vnc-server-enabled false /etc/lightdm/lightdm.conf
+	# Disable guest login, auto login, user enumeration, remote X server login, and VNC/RDP access.
+	reconfig -x 'replace' -d '=' allow-guest false /etc/lightdm/lightdm.conf
+	reconfig -x 'replace' -d '=' AutomaticLogin false /etc/lightdm/lightdm.conf
+	reconfig -x 'replace' -d '=' greeter-show-manual-login true /etc/lightdm/lightdm.conf
+	reconfig -x 'replace' -d '=' greeter-hide-users true /etc/lightdm/lightdm.conf
+	reconfig -x 'replace' -d '=' xdmcp-enabled false /etc/lightdm/lightdm.conf
+	reconfig -x 'replace' -d '=' vnc-server-enabled false /etc/lightdm/lightdm.conf
 fi
 #
 # GDM
 if hash gdm; then
 	# Disable automatic login
-	reconfig -d \= AutomaticLoginEnable false /etc/gdm/custom.conf
+	reconfig -x 'replace' -d '=' AutomaticLoginEnable false /etc/gdm/custom.conf
 fi
 #
 # SDDM
 if hash sddm; then
-	# Disable automatic login
-	reconfig User '' /etc/sddm.conf
-	reconfig Session '' /etc/sddm.conf
-
-	# Hide the user list
-	reconfig HideUsers '' /etc/sddm.conf
-	reconfig DisableDebug true /etc/sddm.conf
+	# Disable automatic login and user enumeration
+	reconfig -x 'replace' User '' /etc/sddm.conf
+	reconfig -x 'replace' Session '' /etc/sddm.conf
+	reconfig -x 'replace' HideUsers '' /etc/sddm.conf
+	reconfig -x 'replace' DisableDebug true /etc/sddm.conf
 fi

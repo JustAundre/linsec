@@ -1,8 +1,14 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Anacron & Cron Jobs
 #
 # Locate scheduled task files, prompt to review/edit each, then enqueue for removal
-mapfile -td '' cron_files < <(find /etc/cron* /var/spool/anacron/cron* /etc/anacrontab -type f)
+mapfile -td '' cron_files < <(find /etc/cron* /var/spool/anacron/cron* /etc/anacrontab -type f -print0)
 
 if [[ "${#cron_files[@]}" -ge 1 ]]; then
 	for task in "${cron_files[@]}"; do
@@ -19,7 +25,7 @@ if [[ "${#cron_files[@]}" -ge 1 ]]; then
 		fi
 	done
 
-	if rm -v "${delete_queue[@]}"; then
+	[[ ${#delete_queue[@]} -ge 1 ]] && if rm -v "${delete_queue[@]}"; then
 		log i 'Removed all selected scheduled tasks.'
 	else
 		log e 'Something went wrong during the deletion.'

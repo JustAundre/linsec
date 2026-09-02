@@ -1,8 +1,70 @@
+#!/usr/bin/env bash
+
+
+
+
+
+#
+# Script-specific Function(s)
+#
+# Helper function to select an action to rectify an issue with no preset fix.
+fixes=(
+	'Change ownership'
+	'Change permissions'
+	'Rename node'
+	'' '' ''
+	'Delete node'
+)
+select_fix() {
+	# Prompt for action
+	local preprompt_msg
+	preprompt_msg+="\"${1}\" is owned by $(stat -c '%U:%G/%u:%g' "${1}") with permissions $(stat -c '%a' "${1}")" selection selections x y user group basename
+	#
+	# Act on selections
+	mapfile -t selections < <(checklist -t 'Select a method of remediation.' checklist "${fixes[@]}")
+	for selection in "${selections[@]}"; do
+		# Prompt for new ownership
+		# Validate given user and group
+		# Change the ownership
+		case "${selection}" in
+			'Change ownership')
+				until [[ "${user}" =~ ^[0-9]+$ ]] || getent passwd -- "${user}" &>/dev/null && [[ -n "${user}" ]]; do
+					[[ -n "${x}" ]] && log w 'Invalid username/UID provided.' || x=true
+					read -rp 'Enter the new user owner: ' user
+				done
+				until [[ "${group}" =~ ^[0-9]+$ ]] || getent group -- "${group}" &>/dev/null && [[ -n "${group}" ]]; do
+					[[ -n "${y}" ]] && log w 'Invalid group/GID provided.' || y=true
+					read -rp 'Enter the new group owner: ' group
+				done
+				chown -hc -- "${user}:${group}" "${1}"
+			;;
+			'Change permissions')
+				until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]; do
+					read -rp 'Enter the octal permission: ' perm
+				done
+				chmod -c -- "${perm}" "${1}"
+			;;
+			'Rename node')
+				read -rp 'Enter the new name for the node' basename
+				mv -- "${1}" "$(dirname -- "${1}")""${basename}"
+			;;
+			'Delete node')
+				rm -rfv -- "${1}"
+			;;
+		esac
+	done
+}
+export -f select_fix
+
+
+
+
+
 #
 # Invalidities
 #
 # Map out files /w broken ownership.
-mapfile -td '' paths < <(find / -xephem \( -nouser -o -nogroup \) -print0)
+mapfile -td '' paths < <(find / -xephem '(' -nouser -o -nogroup ')' -print0)
 for path in "${paths[@]}"; do (
 	# Verbosity: note invalidities, their type, and the UID/GID.
 	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && invalid_type+=UID
@@ -29,15 +91,16 @@ perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 
 
 #
-# Ambiguous Path Audit
+# Ambiguous Paths
 #
 # Prompt for manual review for paths in /etc/ which aren't owned by a system user.
-mapfile -td '' paths < <(find /etc -xephem \( ! -group 0 -o ! -user 0 \) -print0)
+mapfile -td '' paths < <(find /etc -xephem '(' ! -group 0 -o ! -user 0 ')' -print0)
 for path in "${paths[@]}"; do
 	# If the owners are system users/groups, it's probably fine.
-	if [[ "$(stat -c %g "${path}")" -ge 1000 || "$(stat -c %u "${path}")" -ge 1000 ]]
-	then select_fix "${path}"
-	else log i "${path} isn't owned by 0:0 but marked as likely safe as the owners are system users."
+	if [[ "$(stat -c %g "${path}")" -ge 1000 || "$(stat -c %u "${path}")" -ge 1000 ]]; then
+		select_fix "${path}"
+	else
+		log i "${path} isn't owned by 0:0 but marked as likely safe as the owners are system users."
 	fi
 done
 #
@@ -52,7 +115,7 @@ done
 
 
 #
-# Identity & Authorization Files
+# Identity & Authorization
 #
 # Handle /etc/passwd & /etc/group
 perm_fix -m 644 -o 0 -g 0 /etc/passwd /etc/group
@@ -70,7 +133,6 @@ mapfile -td '' paths < <(find /etc/sudoers.d /etc/sudoers -type f -print0)
 for path in "${paths[@]}"; do
 	perm_fix -m 600 -o 0 -g 0 "${path}"
 done
-
 mapfile -td '' paths < <(find /etc/sudoers.d /etc/sudoers -type d -print0)
 for path in "${paths[@]}"; do
 	perm_fix -m 700 -o 0 -g 0 "${path}"
@@ -98,7 +160,6 @@ mapfile -td '' paths < <(find /etc/systemd/system -type f -print0)
 for path in "${paths[@]}"; do
 	perm_fix -m 640 -o 0 -g 0 "${path}"
 done
-
 mapfile -td '' paths < <(find /etc/systemd/system -type d -print0)
 for path in "${paths[@]}"; do
 	perm_fix -m 750 -o 0 -g 0 "${path}"
@@ -109,7 +170,6 @@ mapfile -td '' paths < <(find /etc/cron.* /etc/crontab /etc/at.allow -type f -pr
 for path in "${paths[@]}"; do
 	perm_fix -m 640 -o 0 -g 0 "${path}"
 done
-
 mapfile -td '' paths < <(find /etc/cron.* /etc/crontab /etc/at.allow -type d -print0)
 for path in "${paths[@]}"; do
 	perm_fix -m 750 -o 0 -g 0 "${path}"
@@ -148,8 +208,8 @@ done
 #
 # Some distros use the adm user for these logs
 (
-	auditd_log_dir="$(dirname "$(awk -F\= '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
-	if [[ "${os_info[ID]}" =~ ^(ubuntu|almalinux)$ && -td "${auditd_log_dir}" ]]; then
+	auditd_log_dir="$(dirname "$(awk -F'=' '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
+	if [[ "${os_info[ID]}" =~ ^(ubuntu|almalinux)$ && -d "${auditd_log_dir}" ]]; then
 		mapfile -td '' paths < <(find "${auditd_log_dir}" -type f -print0)
 		for path in "${paths[@]}"; do
 			perm_fix -m 640 -o 0 -g adm "${path}"
@@ -184,9 +244,7 @@ for path in "${paths[@]}"; do
 	perm_fix -m 755 -o 0 -g 0 "${path}"
 done
 #
-# Secure local home directories
-# (including root's home @ /root)
-# Iterate over all interactive users' home directories
+# Secure local home directories (including root's home @ /root)
 (for user in "${int_users[@]}"; do
 	home="$(grep "^${user}:" /etc/passwd | head -n1 | cut -d: -f6)"
 
@@ -217,7 +275,6 @@ if [[ "${os_info[ID]}" == debian || "${os_info[ID]}" == ubuntu ]]; then
 			perm_fix -m 644 -o 0 -g 0 "${path}"
 		done
 	fi
-
 	if [[ -d /usr/share/keyrings ]]; then
 		mapfile -td '' paths < <(find /usr/share/keyrings -type f -print0)
 		for path in "${paths[@]}"; do

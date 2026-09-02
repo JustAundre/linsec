@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
+
+
+
+
+
 #
-# Setup
+# Environment Setup
 #
 apache_main_config="/etc/apache2/apache2.conf"
 apache_additional_config="/etc/apache2/conf-enabled/99-apache-security.conf"
 #
 # Confirm existence of drop-in configuration file
 touch "$apache_additional_config"
-#
-# Append a configuration if the configuration doesn't already exist; otherwise skip.
-safe_add() {
-	grep -qF -- "$1" "$apache_main_config" ||
-	echo "$1" >>"$apache_main_config"
-}
 
 
 
@@ -30,17 +29,14 @@ find /etc/apache2 -type f -name "*.conf"\
 # Fix the "Options" error in main config
 sed -i 's/^.*Options.*Indexes.*$/\tOptions None/g' "$apache_main_config"
 #
-# Disable risky modules (no confirmation)
-echo "🚧: Disabling risky modules..."
+# Disable risky modules
 a2dismod -fq autoindex status info
 #
 # Hide version information
-echo "🚧: Preventing web server version leaks..."
-safe_add "ServerTokens Prod"
-safe_add "ServerSignature Off"
+reconfig -x 'replace' "ServerTokens" "Prod" /etc/apache2/apache2.conf
+reconfig -x 'replace' "ServerSignature" "Off" /etc/apache2/apache2.conf
 #
 # Standardizes the /var/www/ block to "Options None" and "AllowOverride None"
-echo "🚧: Hardening Directory blocks..."
 sed -Ei~ '
 	/<Directory\s+\/var\/www\/>/,/<\/Directory>/ {
 		s/^\s*Options.*/\tOptions None/
@@ -62,33 +58,31 @@ echo '
 
 
 
+
 #
 # Extended Hardening
 #
 if confirm 'Apply extended Apache hardening (TRACE, default site, modules, TLS, WAF)'; then
 	# Disable HTTP TRACE
-	echo "🚧: Disabling HTTP TRACE..."
 	if grep -q '^TraceEnable' "$apache_main_config"; then
 		sed -i 's/^TraceEnable.*/TraceEnable off/' "$apache_main_config"
 	else
-		safe_add "TraceEnable off"
+		reconfig -x 'replace' "TraceEnable" "off"
 	fi
 	#
 	# Remove the default site
-	echo "🚧: Disabling the default site..."
 	if [[ -f /etc/apache2/sites-enabled/000-default.conf ]]; then
 		a2dissite 000-default.conf || true
 	fi
 	#
 	# Disable additional risky modules (if present)
-	echo "🚧: Disabling additional risky modules..."
 	a2dismod -fq cgi userdir proxy proxy_http proxy_balancer proxy_ftp 2>/dev/null || true
 	#
 	# Limit the request body size
-	safe_add "LimitRequestBody 10485760"
+	reconfig -x 'replace' "LimitRequestBody" "10485760"
 	#
 	# Strip ETag headers
-	safe_add "FileETag None"
+	reconfig -x 'replace' "FileETag" "None"
 	echo 'Header unset ETag' >>"$apache_main_config"
 	#
 	# Strict TLS configuration (only when mod_ssl is active)

@@ -2,7 +2,10 @@
 
 > [!TIP]
 >
-> You may want to use a text viewer which displays null bytes (e.g. `less -R (path)`), as null bytes is what's used to delimitate each path from another (because it is the only character which may not be used in file paths, next to forward slashes) when viewing the log files from commands mentioned here.
+> You may want to use a text viewer which displays null bytes (e.g. `less -R (path)`),
+> as null bytes is what's used to delimitate each path from another
+> (because it is the only character which may not be used in file paths, next to forward slashes)
+> when viewing the log files from commands mentioned here.
 
 ## Nodes /w Non-ascii
 
@@ -22,4 +25,4 @@ Use the below command to scan for nodes /w leading hyphens in their name:
 find / -mindepth 1 -name '-*' -xephem -print0 | tee "nodes-with-leading-hyphen.log"
 ```
 
-You can find the results in the file `nodes-with-leading-hyphen.log` of your CWD.
+You can find the results in `nodes-with-leading-hyphen.log` of your CWD.

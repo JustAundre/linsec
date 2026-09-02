@@ -9,11 +9,7 @@
 	umask 077
 	#
 	# Lock down variables
-	declare -rx PROMPT_COMMAND='
-		history -a
-		history -w
-		sleep .15
-	'
+	declare -rx PROMPT_COMMAND='history -a; history -w; sleep .15'
 	declare -rx HISTIGNORE=
 	declare -rx HISTCONTROL=ignoreboth
 	declare -rx LD_PRELOAD=
@@ -26,11 +22,12 @@
 	UID="$(</proc/self/loginuid)"
 	[[ "${UID}" == 4294967295 ]] && UID="$(id -u)"
 	declare -rx UID
-	declare -rx USER="$(getent passwd "${UID}" | cut -d: -f1)"
+	USER="$(id -nu)"
+	HOME="$(getent passwd "${USER}" | cut -f6)"
+	HOSTNAME="$(hostname)"
+	declare -rx USER HOME HOSTNAME
 	declare -rx LOGNAME="${USER}"
-	declare -rx HOME="$(getent passwd "${USER}" | cut -f6)"
 	declare -rx HISTFILE="${HOME}/.bash_history"
-	declare -rx HOSTNAME="$(hostname)"
 	for var in SSH_CONNECTION SSH_CLIENT; do
 		[[ -z "${var}" ]] && declare -rx "${var}=Local"
 	done

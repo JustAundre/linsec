@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Modify/Verify
 #
@@ -6,14 +12,14 @@
 	systemd-analyze verify cnf/rsc-caps/slice-individual.slice 2>&1 | grep invalid ||
 	systemd-analyze verify cnf/rsc-caps/slice-shared.slice 2>&1 | grep invalid
 do
-	if [[ -z "${ran}" ]]; then
-		ran=true
+	if ((! ran)); then
+		ran=1
 	else
 		log w 'SystemD found issue(s) with your configuration.'
 		log i $'After you resume, you\'ll be made to revise your configurations again.'
 		pause
 	fi
-	"${EDITOR}" cnf/rsc-caps/slice-individual.slice cnf/rsc-caps/slice-shared.conf cnf/rsc-caps/limits.slice
+	"${EDITOR}" cnf/rsc-caps/slice-individual.slice cnf/rsc-caps/slice-shared.slice cnf/rsc-caps/limits.conf
 done)
 
 
