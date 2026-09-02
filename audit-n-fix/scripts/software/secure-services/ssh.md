@@ -6,8 +6,6 @@ Ensure SSHD's integrity; if possible, completely purge it from the system and th
 
 1. Reinstall SSHD
 
-<small>(OS-dependant commands)</small>
-
 ```bash
 # For Debian and its derivatives:
 sudo apt-get install --reinstall openssh-server
@@ -26,15 +24,11 @@ sudo pacman -S openssh
 
 1. Purge SSH files
 
-<small>(OS-agnostic commands)</small>
-
 ```bash
 sudo rm -rf /etc/ssh
 ```
 
 2. Regenerate RSA, ECDSA, and ED25519 private host keys
-
-<small>(OS-agnostic commands)</small>
 
 ```bash
 ssh-keygen -A
@@ -55,4 +49,6 @@ ssh-keygen -f /root/.ssh/known_hosts -R localhost
 
 \* Handled in the template
 
-<small>Pre-adjusted template `/etc/ssh/sshd_config` found at `audit-n-fix/scripts/cnf/sshd_config` for your convenience.</small>
+There is a pre-adjusted template,
+`/etc/ssh/sshd_config` @ `audit-n-fix/scripts/cnf/sshd_config`
+for your convenience.

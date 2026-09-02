@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+
+
+
+
+
 #
 # Environment Setup
 #
@@ -12,13 +17,17 @@ for function in "../lib/"*; do
 	. "${function}"
 done
 #
+# Set editor
 # Secure UMASK
-umask 077
-#
 # Include hidden directories when globbing
 # Trying to avoid errors when globbing results in nothing, & set case insensitivity for responses.
 # Unset aliases & disable alias expansion
 # Make a pipeline's exit code the exit code of the last failed command of the pipelines
+until [[ -x "${EDITOR}" ]]; do
+	log w 'Invalid or no text editor selected; try nano or vi?'
+	read -rp 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
+done
+umask 077
 shopt -s dotglob nullglob nocasematch
 unalias -a
 set -o pipefail
@@ -47,7 +56,7 @@ mapfile -t all_users < <(cut -d: -f1 < /etc/passwd)
 #
 # Store OS details in an associative array.
 declare -A os_info
-while IFS=\= read -r key value; do
+while IFS='=' read -r key value; do
 	value="${value%\"}"
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
@@ -63,26 +72,18 @@ done < /etc/os-release
 log i 'Running environment checks...'
 #
 # 1. Is this running in Bash & NOT sourced?
-if [[ -z ${BASH_SOURCE[0]} ]]; then
-	errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
-#
 # 2. Does this script have root permissions?
-elif [[ ${EUID} -ne 0 ]]; then
-	errors+=("Must run as root. Try (sudo bash ${0}).")
-#
 # 3. Is the active init. system SystemD?
-elif [[ "$(< /proc/1/comm)" != systemd ]]; then
-	errors+=('System is not using SystemD which is the only system daemon supported by this script.')
-#
 # 4. Is the output a terminal?
-elif [[ ! -t 0 ]]; then
-	errors+=('All scripts here require an interactive terminal.')
-fi
+[[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
+[[ ${EUID} -eq 0 ]] || errors+=("Must run as root. Try (sudo bash ${0}).")
+[[ "$(< /proc/1/comm)" == systemd ]] || errors+=('System is not using SystemD which is the only system daemon supported by this script.')
+[[ -t 0 ]] || errors+=('All scripts here require an interactive terminal.')
 #
-# If the exit variable is set, exit.
+# If any of the above, alert.
 if [[ ${#errors[@]} -ge 1 ]]; then
-	for error in "${errors[@]}"; do log e "${error}"; done
-	log w 'One or more startup checks failed.'
+	log e "${errors[@]}"
+	log e "Failed ${#errors[@]} startup checks."
 	confirm 'Continue' || exit 69
 else
 	log i 'Passed startup checks.'
@@ -95,33 +96,19 @@ fi
 #
 # Discovery & Execution
 #
-# Locate all scripts and fetch their descriptions.
-declare -A options
-while read -r script; do
-	options["$(basename "${script}"): $(grep '^### ' "${script}" | sed 's/### //')"]="${script}"
-done < <(find scripts -name '*.sh')
+# Enumerate all scripts, select 1.
+mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
+script="$(checklist -t 'Choose a script to run' "${scripts[@]}")"
 #
-# List them off--select 1.
-script="${options["$(checklist -t 'Choose a script to run' "${!options[@]}")"]}"
-if [[ -x ${script} ]]; then
-	# Find a valid file name for the log file
-	# Log to master a log file
-	session_id=1
-	while compgen -G "*-${session_id}.log" > /dev/null; do ((session_id++)); done
-	main_log="logs/$(basename "${script}" | sed 's/.sh//g')-${session_id}.log"
-	mkdir -p "$(dirname -- "${main_log}")" && : >> "${main_log}"
-	exec &> >(tee -a "${main_log}")
-	#
-	# Execute the script
-	. "${script}"
-else
-	log e <<- EOF
-		A fatal error occured:
-		    Attempted executable path - ${script}
-		    Path $([[ -f ${script} ]] || printf 'does not') exist or is a directory.
-		    Path is $([[ -x ${script} ]] || printf 'not') executable.
-	EOF
-fi
+# Find a valid file name for the log file
+session_id=1
+while compgen -G "*-${session_id}.log" > /dev/null; do ((session_id++)); done
+main_log="logs/$(basename "${script}" | sed 's/\.sh//g')-${session_id}.log"
+mkdir -p "$(dirname -- "${main_log}")" && : >> "${main_log}"
+#
+# Start logging and execute the selected script.
+exec &> >(tee -a "${main_log}")
+. "${script}"
 
 
 
@@ -131,7 +118,7 @@ fi
 # Exit
 #
 # Fetch log files, clear the screen, & print the summary.
-mapfile -t log_files < <(timeout 5 find ./logs -maxdepth 1 -type f -name "*${session_id}.log")
+mapfile -t log_files < <(timeout 5 find logs -maxdepth 1 -type f -name "*${session_id}.log")
 clear
 cat <<- EOF
 	  ---{=========}###[@]###{===========}---

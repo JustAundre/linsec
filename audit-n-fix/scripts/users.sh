@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Environment Setup
 #
@@ -26,7 +32,7 @@ unset preprompt_msg
 # Lock users flagged to be locked.
 # Prompt to change the shell for users flagged to be reshelled.
 # Prompt to change the UID of users flagged to be reUIDed.
-# Promot to change the primary & supplementary groups of users flagged to be regrouped.
+# Prompt to change the primary & supplementary groups of users flagged to be regrouped.
 for u in "${users_del[@]}"; do
 	userdel -rf "${u}" && log i "Successfully deleted user \"${u}\"."
 done
@@ -57,17 +63,16 @@ for u in "${users_regroup[@]}"; do
 	# Prompt for the new primary group
 	while
 		[[ -z ${primary_group} ]] ||
-			getent "^[^:]+:[^:]+:${primary_group}" /etc/group &> /dev/null
+			grep -qE "^[^:]+:[^:]+:${primary_group}" /etc/group &> /dev/null
 	do
 		read -erp 'Enter new primary group: ' primary_group
 	done
 	#
 	# Prompt for the new supplementary groups
-	while [[ -z ${stop} ]]; do
+	until ((stop)); do
 		read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
-		stop=true
 		for group in "${supplemental_groups[@]}"; do
-			grep -qE "^[^:]+:[^:]+:${group}" /etc/group || unset stop
+			grep -qE "^${group}:" /etc/group || stop=1
 		done
 	done
 	#

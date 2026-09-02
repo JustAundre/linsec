@@ -1,26 +1,79 @@
 #!/usr/bin/env bash
+
+
+
+
+
+#
+# Environment Setup
+#
+# List of valid resource items in limits.conf
+valid_items=(
+	core
+	data
+	fsize
+	memlock
+	msgqueue
+	nice
+	locks
+	maxlogins
+	maxsyslogins
+	priority
+	nproc
+	as
+	rss
+	cpu
+	rtprio
+	rttime
+	sigpending
+	nofile
+)
+#
+# Function to check if an item is in an array
+contains_element() {
+	local match="$1"
+	shift
+	for e; do [[ "$e" == "$match" ]] && return 0; done
+	return 1
+}
+
+
+
+
+
 #
 # Modify/Verify
 #
-# Edit/validify limits.conf
-until [[ "${pass}" == true ]]; do
+pass=0
+until ((pass)); do
+	pass=1
 	"${EDITOR}" cnf/rsc-caps/limits.conf
-	while read -r 'field[0]' 'field[1]' 'field[2]' 'field[3]' 'field[4]'; do
-		# Validate the identifier field
-		# TODO: VALIDATE OTHER FIELDS
-		if [[ "${field[0]}" =~ ^@[0-9]+(:[0-9]+)?$ || "${field[0]}" =~ ^[0-9]+(:[0-9]+)?$ || "${field[0]}" == '*' ]]; then :
-		elif [[ "${field[0]}" =~ ^[@%]([a-zA-Z_.-]{1,32})$ ]] && getent group "${BASH_REMATCH[1]}" &>/dev/null; then :
-		elif [[ "${field[0]}" =~ ^([a-zA-Z_.-]{1,32})$ ]] && getent passwd "${BASH_REMATCH[1]}" &>/dev/null; then :
-		else
-			pass=false
+
+	while read -r domain type item value extra; do
+		# Ignore lines with extra trailing fields or empty values
+		if [[ -z "${domain}" || -z "${type}" || -z "${item}" || -z "${value}" || -n "${extra}" ]]; then
+			pass=0
+			break
+		fi
+		#
+		# Validate domain, type (soft, hard, or -), item, and integer (plus -1 or 'unlimited')
+		if ! {
+			[[ "${domain}" =~ ^@[0-9]+(:[0-9]+)?$ || "${domain}" =~ ^[0-9]+(:[0-9]+)?$ || "${domain}" == '*' ]] ||
+			{ [[ "${domain}" =~ ^[@%]([a-zA-Z_.-]{1,32})$ ]] && getent group "${BASH_REMATCH[1]}" &>/dev/null; } ||
+			{ [[ "${domain}" =~ ^([a-zA-Z_.-]{1,32})$ ]] && getent passwd "${BASH_REMATCH[1]}" &>/dev/null; }
+		} || ! {
+			[[ "${type}" =~ ^(soft|hard|-)$ ]] &&
+			[[ "${value}" =~ ^(-1|[0-9]+|unlimited)$ ]] &&
+			contains_element "${item}" "${valid_items[@]}"
+		}; then
+			pass=0
 			break
 		fi
 	done < <(grep -Ev '^\s*(#|$)' cnf/rsc-caps/limits.conf)
-	if [[ "${pass}" == false ]]; then
+
+	if ((! pass)); then
 		log w 'There was a syntax error in your limits.conf.'
-		pause
-	else
-		pass=true
+		read -rp "Press [ENTER] to re-edit, or wait 10 seconds to exit." -t 10 || exit 1
 	fi
 done
 

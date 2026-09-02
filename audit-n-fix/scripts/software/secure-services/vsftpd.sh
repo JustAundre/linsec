@@ -1,24 +1,17 @@
 #!/usr/bin/env bash
+
+
+
+
+
 #
-# Setup
+# Environment Setup
 #
 # Script Variables
 vsftpdConfig="/etc/vsftpd.conf"
 backup="/etc/vsftpd.conf.bak"
 certDir=/etc/ssl/private
 certFile="${certDir}/vsftpd.pem"
-#
-# A function to apply VSFTPD configurations
-set_vsftpd_config() {
-	local key="${1}"
-	local value="${2}"
-
-	if grep -qE "^#?\s*${key}=" "${vsftpdConfig}"; then
-		sed -i "s|^\s*#\?\s*${key}=.*|${key}=${value}|" "${vsftpdConfig}"
-	else
-		echo "${key}=${value}" >> "${vsftpdConfig}"
-	fi
-}
 #
 # Backup existing configurations
 cp -p "${vsftpdConfig}" "${backup}"
@@ -47,65 +40,65 @@ if ! [[ -f "${certFile}" ]]; then
 fi
 # Disable anonymous access
 echo "🚧: Applying secure VSFTPD configurations..."
-set_vsftpd_config "anonymous_enable" "NO"
+reconfig -x 'replace' -d '=' "anonymous_enable" "NO" /etc/vsftpd.conf
 #
 # Local users only
-set_vsftpd_config "local_enable" "YES"
-set_vsftpd_config "write_enable" "YES"
+reconfig -x 'replace' -d '=' "local_enable" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "write_enable" "YES" /etc/vsftpd.conf
 #
 # Chroot/anchor users to their home directories
-set_vsftpd_config "chroot_local_user" "YES"
-set_vsftpd_config "allow_writeable_chroot" "YES"
+reconfig -x 'replace' -d '=' "chroot_local_user" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "allow_writeable_chroot" "YES" /etc/vsftpd.conf
 #
 # Restrict file permissions
-set_vsftpd_config "local_umask" "022"
+reconfig -x 'replace' -d '=' "local_umask" "022" /etc/vsftpd.conf
 #
 # Disable risky features
-set_vsftpd_config "dirmessage_enable" "NO"
-set_vsftpd_config "xferlog_enable" "YES"
-set_vsftpd_config "port_enable" "NO"
+reconfig -x 'replace' -d '=' "dirmessage_enable" "NO" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "xferlog_enable" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "port_enable" "NO" /etc/vsftpd.conf
 #
 # Enable Logging
-set_vsftpd_config "log_ftp_protocol" "YES"
-set_vsftpd_config "vsftpd_log_file" "/var/log/vsftpd.log"
+reconfig -x 'replace' -d '=' "log_ftp_protocol" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "vsftpd_log_file" "/var/log/vsftpd.log" /etc/vsftpd.conf
 #
 # Connection limits (brute-force mitigation)
-set_vsftpd_config "max_clients" "10"
-set_vsftpd_config "max_per_ip" "3"
-set_vsftpd_config "pasv_enable" "YES"
-set_vsftpd_config "pasv_min_port" "40000"
-set_vsftpd_config "pasv_max_port" "40100"
+reconfig -x 'replace' -d '=' "max_clients" "10" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "max_per_ip" "3" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "pasv_enable" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "pasv_min_port" "40000" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "pasv_max_port" "40100" /etc/vsftpd.conf
 #
 # Idle/timeout limits
-set_vsftpd_config "idle_session_timeout" "600"
-set_vsftpd_config "data_connection_timeout" "300"
+reconfig -x 'replace' -d '=' "idle_session_timeout" "600" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "data_connection_timeout" "300" /etc/vsftpd.conf
 #
 # Banner
-set_vsftpd_config "ftpd_banner" "Authorized access only."
+reconfig -x 'replace' -d '=' "ftpd_banner" "Authorized access only." /etc/vsftpd.conf
 #
 # TLS Hardening
-set_vsftpd_config "ssl_enable" "YES"
-set_vsftpd_config "rsa_cert_file" "$certFile"
-set_vsftpd_config "rsa_private_key_file" "$certFile"
+reconfig -x 'replace' -d '=' "ssl_enable" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "rsa_cert_file" "$certFile" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "rsa_private_key_file" "$certFile" /etc/vsftpd.conf
 #
 # Force Encryption
-set_vsftpd_config "force_local_logins_ssl" "YES"
-set_vsftpd_config "force_local_data_ssl" "YES"
+reconfig -x 'replace' -d '=' "force_local_logins_ssl" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "force_local_data_ssl" "YES" /etc/vsftpd.conf
 #
 # Disable Weak SSL
-set_vsftpd_config "ssl_sslv2" "NO"
-set_vsftpd_config "ssl_sslv3" "NO"
-set_vsftpd_config "ssl_tlsv1" "NO"
-set_vsftpd_config "ssl_tlsv1_1" "NO"
-set_vsftpd_config "ssl_tlsv1_2" "YES"
+reconfig -x 'replace' -d '=' "ssl_sslv2" "NO" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "ssl_sslv3" "NO" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "ssl_tlsv1" "NO" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "ssl_tlsv1_1" "NO" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "ssl_tlsv1_2" "YES" /etc/vsftpd.conf
 #
 # Strong ciphers
-set_vsftpd_config "ssl_ciphers" "HIGH"
+reconfig -x 'replace' -d '=' "ssl_ciphers" "HIGH" /etc/vsftpd.conf
 #
 # Hide users
-set_vsftpd_config "userlist_enable" "YES"
-set_vsftpd_config "userlist_deny" "NO"
-set_vsftpd_config "require_ssl_reuse" "NO"
+reconfig -x 'replace' -d '=' "userlist_enable" "YES" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "userlist_deny" "NO" /etc/vsftpd.conf
+reconfig -x 'replace' -d '=' "require_ssl_reuse" "NO" /etc/vsftpd.conf
 
 
 

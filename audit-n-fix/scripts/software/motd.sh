@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+
+
+
+
+
 #
 # Install MOTDs
 #
@@ -13,7 +19,7 @@ motds=(
 log i "You'll be put into a text editor to review a MOTD file template. Revise it as needed, then it'll be installed to the following files:"
 printf "%s\n" "${motds[@]}"
 pause
-install -m 640 -o 0 -g 0 -D cnf/motd1 "${motds[0]}"
+install -m 640 -o 0 -g 0 -D cnf/motd "${motds[0]}"
 #
 # Hardlink to other likely MOTD file locations
 for path in "${motds[@]:1}"; do
