@@ -4,7 +4,9 @@
 
 > [!NOTE]
 >
-> This section is not applicable to PostgreSQL, if you are following this for PostgreSQL, please skip to the [next section](#audit-authorization).
+> This section is not applicable to PostgreSQL.
+> If you are following this for PostgreSQL,
+> please skip to the [next section](#audit-authorization).
 
 Run the `mysql_secure_installation` command and answer its prompts as needed.
 
