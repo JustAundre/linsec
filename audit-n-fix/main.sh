@@ -41,7 +41,7 @@ set -o pipefail
 #
 # Load the PATH variable into an array, then all executables in the PATH into an array
 mapfile -td ':' paths < <(printf '%s' "${PATH}")
-mapfile -td '' binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -print0)
+mapfile -td '' binaries < <(find -- "${paths[@]}" -maxdepth 1 -type f -executable -print0)
 #
 # Load all interactive, non-interactvie, and all users into their respective arrays
 mapfile -t int_users < <(
