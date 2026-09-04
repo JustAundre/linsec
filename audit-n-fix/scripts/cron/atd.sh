@@ -7,29 +7,30 @@
 #
 # AtD Jobs
 #
-# AtD does not have a standardized directory where it stores Atd jobs, so you have to dig deep into its binary for it.
 if ! hash atd &>/dev/null; then
 	log e 'The AtD program is not installed, there is nothing to do.'
-	exit 10
+	exit 1
 fi
+#
+# AtD does not have a standardized directory where it stores Atd jobs, so you have to dig deep into its binary for it
 while read -r path; do
-	if [[ -d "${path}" && -x "${path}" ]]; then
-		atd_dir="${path}"
-	else
+	# Cycle through the possible candidate AtD jobs directories until 1 sticks
+	[[ -d "${path}" && -x "${path}" ]] || continue
+	if ! [[ -d "${path}" ]]; then
+		log w "Candidate AtD jobs directory \"${path}\" doesn't exist."
 		continue
 	fi
-	if [[ -d "${path}" ]]; then
-		log i "Successfully located AtD job directory @ \"${path}\""
-		mapfile -td '' atd_jobs < <(find "${atd_dir}" ! -name '.SEQ' -type f)
-	else
-		log w "Possible AtD job directory \"${path}\" doesn't exist; attempting to find another possible AtD job directory..."
-		continue
-	fi
-	for atd_job in "${atd_jobs[@]}"; do
-		log i "Reviewing AtD job file \"${atd_job}\"..."
-		sleep 2.5
-		"${EDITOR}" -- "${atd_job}"
-		rm -vi "${atd_job}"
+	#
+	# Once a directory sticks, iterate through all the job files in it as necessary.
+	log i "Successfully located AtD job directory @ \"${path}\""
+	mapfile -td '' jobs < <(find "${path}" ! -name '.SEQ' -type f)
+	for job in "${jobs[@]}"; do
+		log i "Reviewing AtD job \"${job}\"..."
+		pause 3
+		"${EDITOR}" -- "${job}"
+		rm -vi "${job}"
 	done
-done < <(strings "$(which atd)" | grep -Eo '/var/spool/.+')
-[[ -z "${atd_dir}" ]] && log w $'AtD is installed, but the directory where AtD jobs are stored couldn\'t be located.'
+done < <(
+	strings "$(which atd)" |
+		grep -Eo '/var/spool/.+'
+)

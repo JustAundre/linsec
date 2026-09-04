@@ -12,11 +12,9 @@ mapfile -td '' cron_files < <(find /etc/cron* /var/spool/anacron/cron* /etc/anac
 
 if [[ "${#cron_files[@]}" -ge 1 ]]; then
 	for task in "${cron_files[@]}"; do
-		log i "Reviewing scheduled task found @ \"${task}\"..."
-		sleep 2.5
-
+		log i "Reviewing scheduled task: \"${task}\"."
+		pause 3
 		"${EDITOR}" -- "${task}"
-
 		if confirm "Enqueue \"${task}\" for removal"; then
 			delete_queue+=("${task}")
 			log i "\"${task}\" was queued for removal."

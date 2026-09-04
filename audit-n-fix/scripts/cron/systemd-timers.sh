@@ -17,7 +17,9 @@ mapfile -t triggers < <(
 #
 # Audit them & act accordingly.
 for trigger in "${triggers[@]}"; do
-	"${EDITOR}" -- "${trigger}" < /dev/tty &&
+	log i "Reviewing trigger: \"${trigger}\"."
+	pause 3
+	"${EDITOR}" -- "${trigger}" &&
 		confirm "Delete \"${trigger}\"" &&
 		systemctl disable --now -- "${trigger}" &&
 		rm -v -- "${trigger}"
