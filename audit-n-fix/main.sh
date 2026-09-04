@@ -96,18 +96,9 @@ fi
 #
 # Discovery & Execution
 #
-# Enumerate all scripts, select 1.
+# Enumerate all scripts, select 1 for execution.
 mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
 script="$(checklist -t 'Choose a script to run' "${scripts[@]}")"
-#
-# Find a valid file name for the log file
-session_id=1
-while compgen -G "*-${session_id}.log" > /dev/null; do ((session_id++)); done
-main_log="logs/$(basename "${script}" | sed 's/\.sh//g')-${session_id}.log"
-mkdir -p "$(dirname -- "${main_log}")" && : >> "${main_log}"
-#
-# Start logging and execute the selected script.
-exec &> >(tee -a "${main_log}")
 . "${script}"
 
 
