@@ -17,8 +17,8 @@ fixes=(
 )
 select_fix() {
 	# Prompt for action
-	local preprompt_msg
-	preprompt_msg+="\"${1}\" is owned by $(stat -c '%U:%G/%u:%g' "${1}") with permissions $(stat -c '%a' "${1}")" selection selections x y user group basename
+	local preprompt_msg selection selections x y user group basename
+	preprompt_msg+="\"${1}\" is owned by $(stat -c '%U:%G/%u:%g' "${1}") with permissions $(stat -c '%a' "${1}")"
 	#
 	# Act on selections
 	mapfile -t selections < <(checklist -t 'Select a method of remediation.' checklist "${fixes[@]}")
