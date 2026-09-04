@@ -9,10 +9,10 @@
 #
 # CD into the script's parent directory;
 # Source global functions and variables.
-cd "$(dirname "${0}")" || exit 69
+cd "$(dirname "${0}")" || exit 1
 #
 # Source library commands
-[[ -d "../lib/" ]] || exit 69
+[[ -d "../lib/" ]] || exit 1
 for function in "../lib/"*; do
 	. "${function}"
 done
@@ -84,10 +84,9 @@ log i 'Running environment checks...'
 if [[ ${#errors[@]} -ge 1 ]]; then
 	log e "${errors[@]}"
 	log e "Failed ${#errors[@]} startup checks."
-	confirm 'Continue' || exit 69
-else
-	log i 'Passed startup checks.'
+	confirm 'Continue' || exit 2
 fi
+log i 'Passed startup checks.'
 
 
 
