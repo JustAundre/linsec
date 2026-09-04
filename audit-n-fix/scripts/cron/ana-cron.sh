@@ -15,7 +15,7 @@ if [[ "${#cron_files[@]}" -ge 1 ]]; then
 		log i "Reviewing scheduled task found @ \"${task}\"..."
 		sleep 2.5
 
-		"${EDITOR}" "${task}"
+		"${EDITOR}" -- "${task}"
 
 		if confirm "Enqueue \"${task}\" for removal"; then
 			delete_queue+=("${task}")

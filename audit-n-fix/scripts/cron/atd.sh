@@ -8,7 +8,7 @@
 # AtD Jobs
 #
 # AtD does not have a standardized directory where it stores Atd jobs, so you have to dig deep into its binary for it.
-if ! hash atd; then
+if ! hash atd &>/dev/null; then
 	log e 'The AtD program is not installed, there is nothing to do.'
 	exit 10
 fi
@@ -28,7 +28,7 @@ while read -r path; do
 	for atd_job in "${atd_jobs[@]}"; do
 		log i "Reviewing AtD job file \"${atd_job}\"..."
 		sleep 2.5
-		"${EDITOR}" "${atd_job}"
+		"${EDITOR}" -- "${atd_job}"
 		rm -vi "${atd_job}"
 	done
 done < <(strings "$(which atd)" | grep -Eo '/var/spool/.+')
