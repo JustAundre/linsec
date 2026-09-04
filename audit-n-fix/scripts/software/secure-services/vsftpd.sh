@@ -107,14 +107,13 @@ reconfig -x 'replace' -d '=' "require_ssl_reuse" "NO" /etc/vsftpd.conf
 #
 # Configuration Validation
 #
-# vsftpd has no syntax-check flag; a valid config keeps the daemon running in the foreground, so use a timeout. Exit 124 means it survived until killed (valid).
+# Vsftpd has no syntax-check flag; a valid config keeps the daemon running in the foreground, so use a timeout. Exit 124 means it survived until killed (valid).
 timeout 2 vsftpd "${vsftpdConfig}" &>/dev/null
-if [[ $? -eq 124 ]]; then
-	systemctl restart vsftpd
-	echo "✅: VSFTPD started securely"
-else
-	echo "❌: Configuration validation error; reverting to backup(s)..."
+if ! [[ $? -eq 124 ]]; then
+	log e "Configuration failed validation; reverting..."
 	cp -p "${backup}" "${vsftpdConfig}"
 	systemctl restart vsftpd
-	exit 1
+	exit 10
 fi
+systemctl restart vsftpd
+log i "Vsftpd restarted with no issues."

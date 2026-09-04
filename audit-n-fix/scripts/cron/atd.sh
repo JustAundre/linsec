@@ -9,7 +9,7 @@
 #
 if ! hash atd &>/dev/null; then
 	log e 'The AtD program is not installed, there is nothing to do.'
-	exit 1
+	exit 10
 fi
 #
 # AtD does not have a standardized directory where it stores Atd jobs, so you have to dig deep into its binary for it

@@ -96,12 +96,11 @@ fi
 # Configuration Validation
 #
 log i 'Testing Nginx configuration...'
-if nginx -t; then
-	log i 'Nginx configuration validated; restarting Nginx...'
-	systemctl restart nginx
-else
+if ! nginx -t; then
 	log i 'Nginx configuration is invalid; reverting Nginx...'
 	cp -p "$backup_dir/nginx.conf" "/etc/nginx/nginx.conf"
 	cp -p "$backup_dir/sites-available/default" "/etc/nginx/sites-available/default"
-	exit 1
+	exit 10
 fi
+log i 'Nginx configuration validated; restarting Nginx...'
+systemctl restart nginx

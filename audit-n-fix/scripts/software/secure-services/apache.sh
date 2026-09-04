@@ -9,9 +9,7 @@
 #
 apache_main_config="/etc/apache2/apache2.conf"
 apache_additional_config="/etc/apache2/conf-enabled/99-apache-security.conf"
-#
-# Confirm existence of drop-in configuration file
-touch "$apache_additional_config"
+: >> "$apache_additional_config"
 
 
 
@@ -87,7 +85,7 @@ if confirm 'Apply extended Apache hardening (TRACE, default site, modules, TLS, 
 	#
 	# Strict TLS configuration (only when mod_ssl is active)
 	if a2query -m ssl >/dev/null 2>&1; then
-		echo "🚧: Hardening SSL configuration..."
+		log i "🚧: Hardening SSL configuration..."
 		ssl_conf=/etc/apache2/mods-enabled/ssl.conf
 		if [[ -f "$ssl_conf" ]]; then
 			sed -Ei 's/^\s*SSLProtocol.*/SSLProtocol All -SSLv2 -SSLv3 -TLSv1 -TLSv1.1/' "$ssl_conf"
@@ -98,16 +96,13 @@ if confirm 'Apply extended Apache hardening (TRACE, default site, modules, TLS, 
 	fi
 	#
 	# WAF: ModSecurity + OWASP CRS + mod_evasive
-	if confirm 'Install ModSecurity + OWASP CRS + mod_evasive (WAF)'; then
-		(
-			set -e
-			secure_install libapache2-mod-security2 modsecurity-crs libapache2-mod-evasive
-			a2enmod security2 evasive
-			if [[ -f /etc/modsecurity/modsecurity.conf-recommended && ! -f /etc/modsecurity/modsecurity.conf ]]; then
-				cp -p /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
-			fi
-			sed -i 's/^SecRuleEngine .*/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
-		)
+	if confirm 'Install ModSecurity, OWASP CRS and mod_evasive (WAF)'; then
+		# secure_install libapache2-mod-security2 modsecurity-crs libapache2-mod-evasive
+		a2enmod security2 evasive
+		if [[ -f /etc/modsecurity/modsecurity.conf-recommended && ! -f /etc/modsecurity/modsecurity.conf ]]; then
+			cp -p /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+		fi
+		sed -i 's/^SecRuleEngine .*/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
 	fi
 fi
 
@@ -120,16 +115,10 @@ fi
 #
 echo "🚧: Verifying configuration syntax..."
 a2enmod headers
-if apache2ctl -t; then
-	echo "
-		✅: Syntax OK
-		🚧: Restarting Apache...
-	"
-	systemctl restart apache2
-else
-	echo '
-		❌: Syntax check failed
-		ℹ️: Run "apache2ctl -t" to see why.
-	'
-	exit 1
+if ! apache2ctl -t; then
+	log e 'Syntax check failed'
+	log i 'Run "apache2ctl -t" to see why.'
+	exit 10
 fi
+log i 'Passed syntax check.' 'Restarting Apache...'
+systemctl restart apache2
