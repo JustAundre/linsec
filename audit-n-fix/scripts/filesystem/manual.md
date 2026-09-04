@@ -4,7 +4,7 @@
 >
 > You may want to use a text viewer which displays null bytes (e.g. `less -R (path)`),
 > as null bytes is what's used to delimitate each path from another
-> (because it is the only character which may not be used in file paths, next to forward slashes)
+> (null bytes and forward slashes may not be used to name nodes)
 > when viewing the log files from commands mentioned here.
 
 ## Nodes /w Non-ascii
