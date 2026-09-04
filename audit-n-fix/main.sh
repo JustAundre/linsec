@@ -109,7 +109,6 @@ script="$(checklist -t 'Choose a script to run' "${scripts[@]}")"
 # Exit
 #
 # Fetch log files, clear the screen, & print the summary.
-mapfile -t log_files < <(timeout 5 find logs -maxdepth 1 -type f -name "*${session_id}.log")
 clear
 cat <<- EOF
 	  ---{=========}###[@]###{===========}---
@@ -123,12 +122,5 @@ cat <<- EOF
 	        good password hygiene and
 	         a good password manager.
 
-	-----<============>{x}<============>-----
 EOF
-if [[ ${#log_files[@]} -ge 1 ]]; then
-	printf 'Here are the log files from this session:\n'
-	printf '%s\n' "${log_files[@]}"
-else
-	log w "That's strange, no log files were detected."
-fi
 exit 0
