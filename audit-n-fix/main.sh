@@ -108,7 +108,6 @@ script="$(checklist -t 'Choose a script to run' "${scripts[@]}")"
 #
 # Exit
 #
-# Fetch log files, clear the screen, & print the summary.
 clear
 cat <<- EOF
 	  ---{=========}###[@]###{===========}---
