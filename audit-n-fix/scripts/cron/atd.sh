@@ -16,19 +16,19 @@ fi
 while read -r path; do
 	# Cycle through the possible candidate AtD jobs directories until 1 sticks
 	[[ -d "${path}" && -x "${path}" ]] || continue
-	if ! [[ -d "${path}" ]]; then
+	if [[ ! -d "${path}" ]]; then
 		log w "Candidate AtD jobs directory \"${path}\" doesn't exist."
 		continue
 	fi
 	#
 	# Once a directory sticks, iterate through all the job files in it as necessary.
 	log i "Successfully located AtD job directory @ \"${path}\""
-	mapfile -td '' jobs < <(find "${path}" ! -name '.SEQ' -type f)
+	mapfile -td '' jobs < <(find -- "${path}" ! -name '.SEQ' -type f)
 	for job in "${jobs[@]}"; do
 		log i "Reviewing AtD job \"${job}\"..."
 		pause 3
 		"${EDITOR}" -- "${job}"
-		rm -vi "${job}"
+		rm -vi -- "${job}"
 	done
 done < <(
 	strings "$(which atd)" |

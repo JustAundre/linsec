@@ -73,14 +73,14 @@ for path in "${paths[@]}"; do (
 		invalid_type+=GID
 	}
 	log i "${path} has an invalid owner ${invalid_type}; changed ownership to 0:0."
-	chown -h 0:0 "${path}"
+	chown -h 0:0 -- "${path}"
 ) done
 #
 # Remove invalid symlinks
 mapfile -td '' paths < <(find / -xephem -xtype l -print0)
 for path in "${paths[@]}"; do
 	log i "${path} is a broken symlink; removing..."
-	unlink "${path}"
+	unlink -- "${path}"
 done
 #
 # Ensure FHS temp directories are world-writable /w sticky-bit.
@@ -220,7 +220,7 @@ done
 			perm_fix -m 0600 -o 0 -g 0 "${path}"
 		done
 	fi
-	chmod -c 0750 "${auditd_log_dir}"
+	chmod -c 0750 -- "${auditd_log_dir}"
 )
 
 #

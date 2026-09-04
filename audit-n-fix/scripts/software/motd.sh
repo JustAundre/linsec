@@ -23,7 +23,7 @@ install -m 640 -o 0 -g 0 -D cnf/motd "${motds[0]}"
 #
 # Hardlink to other likely MOTD file locations
 for path in "${motds[@]:1}"; do
-	link "${motds[0]}" "${path}"
+	link -- "${motds[0]}" "${path}"
 done
 #
 # Delete /etc/update-motd.d/?
