@@ -7,9 +7,9 @@
 > (null bytes and forward slashes may not be used to name nodes)
 > when viewing the log files from commands mentioned here.
 
-## Nodes /w Non-ascii
+## Nodes w/ Non-ascii
 
-Use the below command to scan for nodes /w non-ascii characters in their name:
+Use the below command to scan for nodes w/ non-ascii characters in their name:
 
 ```sh
 find / -mindepth 1 ! -iregex '^[\x00-\x7F\n]+$' -xephem -print0 | tee "nodes-with-non-ascii.log"
@@ -17,9 +17,9 @@ find / -mindepth 1 ! -iregex '^[\x00-\x7F\n]+$' -xephem -print0 | tee "nodes-wit
 
 You can find the results in the file `nodes-with-non-ascii.log` of your CWD.
 
-## Nodes /w Leading Hyphens
+## Nodes w/ Leading Hyphens
 
-Use the below command to scan for nodes /w leading hyphens in their name:
+Use the below command to scan for nodes w/ leading hyphens in their name:
 
 ```sh
 find / -mindepth 1 -name '-*' -xephem -print0 | tee "nodes-with-leading-hyphen.log"

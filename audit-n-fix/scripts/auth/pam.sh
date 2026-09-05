@@ -9,11 +9,11 @@
 #
 # RHEL-like distros
 if hash authselect; then
-	# Configure PAM /w secure defaults enabled & further configure password QA
+	# Configure PAM w/ secure defaults enabled & further configure password QA
 	authselect select sssd with-faillock with-pamaccess with-pwhistory with-pwquality with-mkhomedir with-sudo without-nullok --force
 	install -m 640 -o 0 -g 0 -D cnf/auth/pwquality.conf /etc/security/pwquality.conf
 	#
-	# Regenerate PAM configurations /w previous configuration
+	# Regenerate PAM configurations w/ previous configuration
 	authselect apply-changes
 #
 # Debian-like distros
