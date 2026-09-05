@@ -63,7 +63,7 @@ export -f select_fix
 #
 # Invalidities
 #
-# Map out files /w broken ownership.
+# Map out files w/ broken ownership.
 mapfile -td '' paths < <(find / -xephem '(' -nouser -o -nogroup ')' -print0)
 for path in "${paths[@]}"; do (
 	# Verbosity: note invalidities, their type, and the UID/GID.
@@ -83,7 +83,7 @@ for path in "${paths[@]}"; do
 	unlink -- "${path}"
 done
 #
-# Ensure FHS temp directories are world-writable /w sticky-bit.
+# Ensure FHS temp directories are world-writable w/ sticky-bit.
 perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 
 
