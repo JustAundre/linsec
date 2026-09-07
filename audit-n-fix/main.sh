@@ -97,7 +97,7 @@ log i 'Passed startup checks.'
 #
 # Enumerate all scripts, select 1 for execution.
 mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
-script="$(checklist -t 'Choose a script to run' "${scripts[@]}")"
+script="$(cl-new -t 'Choose a script to run' "${scripts[@]}")"
 . "${script}"
 
 
@@ -107,7 +107,7 @@ script="$(checklist -t 'Choose a script to run' "${scripts[@]}")"
 #
 # Exit
 #
-clear
+clear -x
 cat <<- EOF
 	  ---{=========}###[@]###{===========}---
 	        WINDOWS AT LOSS AT THE
