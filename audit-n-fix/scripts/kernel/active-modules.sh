@@ -23,7 +23,7 @@ done < <(grep -Eo '^[^ ]+' /proc/modules | sort)
 #
 # Prompt for ones to disable.
 mapfile -td '' mods_disable < <(
-	checklist -mt 'These are active kernel modules; select those to unload and disable.' "${readable[@]}" |
+	cl-new -mt 'These are active kernel modules; select those to unload and disable.' "${readable[@]}" |
 		cut -d: -f1
 )
 #

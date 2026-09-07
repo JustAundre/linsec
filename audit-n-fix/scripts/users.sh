@@ -9,16 +9,16 @@
 #
 # Prompt for users to ...
 # Delete, remove password, lock, reshell, reUID & regroup.
-preprompt_msg="$(for user in "${all_users[@]}"; do
+PS3="$(for user in "${all_users[@]}"; do
 	id -a "${user}"
 done)"
-mapfile -td '' users_del < <(checklist -mt 'Select users to delete' "${all_users[@]}") && clear
-mapfile -td '' users_nullpass < <(checklist -mt 'Select users to remove passwords from' "${all_users[@]}") && clear
-mapfile -td '' users_lock < <(checklist -mt 'Select users to lock' "${all_users[@]}") && clear
-mapfile -td '' users_reshell < <(checklist -mt 'Select users to select a new shell for' "${all_users[@]}") && clear
-mapfile -td '' users_reuid < <(checklist -mt 'Select users to assign a new UID' "${all_users[@]}") && clear
-mapfile -td '' users_regroup < <(checklist -mt 'Select users to reassign groups for' "${all_users[@]}") && clear
-unset preprompt_msg
+mapfile -td '' users_del < <(cl-new -mt 'Select users to delete' "${all_users[@]}")
+mapfile -td '' users_nullpass < <(cl-new -mt 'Select users to remove passwords from' "${all_users[@]}")
+mapfile -td '' users_lock < <(cl-new -mt 'Select users to lock' "${all_users[@]}")
+mapfile -td '' users_reshell < <(cl-new -mt 'Select users to select a new shell for' "${all_users[@]}")
+mapfile -td '' users_reuid < <(cl-new -mt 'Select users to assign a new UID' "${all_users[@]}")
+mapfile -td '' users_regroup < <(cl-new -mt 'Select users to reassign groups for' "${all_users[@]}")
+unset PS3
 
 
 
