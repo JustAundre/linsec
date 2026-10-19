@@ -36,7 +36,7 @@ done
 #
 mapfile -td '' selections < <(PS2='Select users to modify' cl-new -mo "${user_vanities[@]}")
 for selection in "${selections[@]}"; do
-	declare -A index
+	declare -A index=()
 	choices=(
 		'Delete user'
 		'Lock user'
@@ -45,7 +45,7 @@ for selection in "${selections[@]}"; do
 		'Change shell'
 		'Change UID'
 		'Change GID'
-		'Change Supplementary groups'
+		'Change supplementary groups'
 	)
 	for choice in "${!choices[@]}"; do
 		declare index["${choice}"]=0
@@ -85,7 +85,7 @@ for selection in "${selections[@]}"; do
 		unset uid
 		until
 			[[ ${uid} =~ ^[0-9]+$ ]] &&
-			! getent passwd "${uid}" /etc/passwd &> /dev/null
+			! id -nu "${uid}" /etc/passwd &>/dev/null
 		do
 			read -erp 'Enter the new UID: ' uid
 		done

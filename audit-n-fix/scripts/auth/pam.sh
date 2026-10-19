@@ -10,8 +10,8 @@
 mapfile -td '' selections < <(PS2='Select patches to apply.' cl-new -mo 'Enforce password quality' 'Enforce minimum password length' 'Fail locking' 'Reject passwordless logins')
 case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 *fedora*)
-	for selections in "${selections[@]}"; do
-		case "${response}" in
+	for selection in "${selections[@]}"; do
+		case "${selection}" in
 		'Enforce password quality')
 			args+=('with-pwquality')
 			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /etc/security/pwquality.conf
@@ -19,11 +19,11 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 		'Fail locking')
 			args+=('with-faillock')
 			;;
-		'Reject logins for passwordless users')
+		'Reject passwordless logins')
 			args+=('without-nullok')
 			;;
 		*)
-			log e "Unknown selection \"${response}\"."
+			log e "Unknown selection ${response@Q}."
 			;;
 		esac
 	done
@@ -33,7 +33,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 *debian*|*ubuntu*)
 	for selection in "${selections[@]}"; do
 		case "${selection}" in
-		'Enforce password complexity')
+		'Enforce password quality')
 			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality /usr/share/pam-configs/pwquality
 			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /etc/security/pwquality.conf
 			;;
@@ -55,7 +55,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 			install -m 640 -o 0 -g 0 -Dv cnf/auth/faillock_notify /usr/share/pam-configs/faillock_notify
 			log i 'Enabled faillock.'
 			;;
-		'Reject logins for passwordless users')
+		'Reject passwordless logins')
 			if ! grep -q 'nullok' /usr/share/pam-configs/unix; then
 				log i 'Logins for passwordless users are already rejected.'
 				continue
@@ -64,7 +64,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 				log i 'Logins for passwordless users are now rejected.'
 			;;
 		*)
-			log e "Unknown selection \"${response}\"."
+			log e "Unknown selection ${response@Q}."
 			;;
 		esac
 	done

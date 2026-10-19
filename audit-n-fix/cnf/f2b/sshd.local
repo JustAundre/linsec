@@ -1,0 +1,28 @@
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 192.168.1.0/24
+bantime = 10m
+findtime = 10m
+maxretry = 5
+backend = systemd
+banaction = iptables-multiport
+banaction_allports = iptables-allports
+
+[sshd]
+enabled = true
+port = ssh
+logpath = %(sshd_log)s
+findtime = 10m
+maxretry = 3
+bantime = 1h
+
+[recidive]
+enabled = true
+logpath = /var/log/fail2ban.log
+banaction = iptables-allports
+protocol = all
+findtime = 1d
+maxretry = 2
+bantime = 1w
+bantime.increment = true
+bantime.factor = 4
+bantime.maxtime = 52w

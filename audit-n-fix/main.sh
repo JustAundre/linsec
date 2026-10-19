@@ -18,11 +18,11 @@ done
 #
 # Set editor
 export EDITOR
-hash "${EDITOR}" &> /dev/null || for EDITOR in nano micro mcedit tilde joe e3 hx nvim vim vi kak emacs ed mp jed ash vis sam; do
-	hash "${EDITOR}" &> /dev/null && break
+hash "${EDITOR}" || for EDITOR in nano micro mcedit tilde joe e3 hx nvim vim vi kak emacs ed mp jed ash vis sam; do
+	hash "${EDITOR}" && break
 done
-until hash "${EDITOR}" &> /dev/null; do
-	log w 'The EDITOR variable is invalid or undeclared.' "A recognized editor couldn't be found in the PATH."
+until hash "${EDITOR}"; do
+	log w 'The EDITOR variable is invalid or undeclared.'
 	read -erp 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
 done
 #
@@ -50,6 +50,7 @@ log_dir="$(pwd)/logs/$(date)" && mkdir -p "${log_dir}" || exit 3
 init="$(ps -p 1 -o comm=)"
 umask 0077
 set -o pipefail
+shopt -s nullglob
 declare -A id_bounds
 while IFS=' ' read -rd $'\n' key value; do
 	id_bounds["${key}"]="${value}"
@@ -62,10 +63,30 @@ while IFS='=' read -r key value; do
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
 done < /etc/os-release
-for pkg_mgr in apt-get dnf yum pacman pkg; do
-	hash "${pkg_mgr}" &> /dev/null && break
+for pkg_backend in apt-get dnf yum pacman pkg; do
+	hash "${pkg_backend}" && break
+	unset pkg_backend
 done
-export log_dir init int_users sys_users all_users os_info pkg_mgr id_bounds
+export log_dir init int_users sys_users all_users os_info pkg_backend id_bounds
+
+
+
+
+
+#
+# DLL Audit
+#
+log w 'If the following command output reveals any DLLs not owned by the system, exit this script immediately and remedy the issue.'
+mapfile -t ldds < <(
+	which ps ss ls netstat find passwd whoami 2>/dev/null |
+		unshare -n runuser -u nobody -- xargs -r -d '\n' ldd |
+		awk '$2 == "=>" && $3 ~ /^\// { print $3 } $1 ~ /^\// { print $1 }' |
+		xargs -r -d '\n' realpath -e |
+		sort -u
+)
+pkg-mgr verify-file "${ldds[@]}"
+pkg-mgr query-owner "${ldds[@]}"
+pause 0
 
 
 
@@ -80,10 +101,12 @@ log i 'Running environment checks...'
 # 2. Does this script have root permissions?
 # 3. Is the active init. system SystemD?
 # 4. Is the output a terminal?
-[[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
-[[ ${EUID} -eq 0 ]] || errors+=("Must run as root. Try (sudo bash ${0}).")
-[[ ${init} =~ ^(systemd|init)$ ]] || errors+=('Your system must be using SystemD or init).')
-[[ -t 0 ]] || errors+=('All scripts here require an interactive terminal.')
+[[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('main.sh: script cannot be sourced and requires Bash interpreter.')
+[[ ${EUID} -eq 0 ]] || errors+=("main.sh: UID 0 required—try: sudo ${0}.")
+[[ ${init} =~ ^(systemd|init)$ ]] || errors+=('main.sh: your system must be using SystemD or init).')
+[[ -t 0 ]] || errors+=('main.sh: interactive terminal required.')
+((${#pkg_backend})) || errors+=('main.sh: unable to find supported package manager in PATH variable.')
+((${#id_bounds[@]} == 8)) || errors+=("main.sh: unable to completely detect this system's UID and GID boundings; check '/etc/login.defs'.")
 #
 # If any of the above, alert.
 if [[ ${#errors[@]} -ge 1 ]]; then
@@ -103,8 +126,8 @@ fi
 mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
 mapfile -td '' selections < <(PS2='Choose a script to run' cl-new -m "${scripts[@]}")
 for script in "${selections[@]}"; do
-	log i "Incoming script: \"${script}\""
-	pause
+	log i "Incoming script: ${script@Q}"
+	pause 0
 	(
 		trap 'exit 130' SIGINT
 		#
@@ -128,18 +151,14 @@ done
 cat <<-EOF
 	  ---{=========}###[@]###{===========}---
 	        Windows at loss at the
-	           Agape freedom of Linux
+	           agape freedom of Linux
 	  ---{=========}###[@]###{===========}---
 
-	       Keep your priorities straight
-	      Take the time to get a password
-	    manager, and use distinct passwords
-		    BEFORE you worry yourself
-	         about hardening servers
+	Suite version:			$(git log | head -n1)
+	Operating system:		$(uname -r)
+	Startup checks failed:		${#errors[@]}
+	Log directory:			${log_dir@Q}
+	# of logs:			$(files=("${log_dir}"/*.txt); printf '%d' "${#files[@]}")
 
-	  ---{=========}###[@]###{===========}---
-
-	You can find log files for this session here:
-	${log_dir}
 EOF
 exit 0

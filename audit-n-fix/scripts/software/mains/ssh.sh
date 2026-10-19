@@ -8,19 +8,15 @@
 # Reset & Regen
 #
 # Backup existing SSH configs
-mv -v /etc/ssh{,~}
+mv -v /etc/ssh{,'.bak'}
 #
 # Reinstall SSHD
-case "${pkg_mgr}" in
-	'apt-get') "${pkg_mgr}" install --reinstall openssh-server -y ;;
-	'dnf') "${pkg_mgr}" reinstall openssh-server -y ;;
-	'yum') "${pkg_mgr}" reinstall openssh-server -y ;;
-	'pacman') "${pkg_mgr}" -S openssh --noconfirm ;;
-	'pkg') "${pkg_mgr}" install -f sshd ;;
-	*)
-		log e 'Unsupported package manager.'
-		exit 11
-		;;
+case "${pkg_backend}" in
+	'apt-get') "${pkg_backend}" install --reinstall openssh-server -y -o Dpkg::Options::='--force-confnew' -o Dpkg::Options::='--force-confmiss' ;;
+	'dnf') "${pkg_backend}" reinstall openssh-server -y ;;
+	'yum') "${pkg_backend}" reinstall openssh-server -y ;;
+	'pacman') "${pkg_backend}" -S openssh --noconfirm ;;
+	'pkg') "${pkg_backend}" install -f sshd ;;
 esac
 #
 # Regenerate

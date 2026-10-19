@@ -1,14 +1,3 @@
-
-# This is the sshd server system-wide configuration file.  See
-# sshd_config(5) for more information.
-
-# This sshd was compiled with PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
-
-# The strategy used for options in the default sshd_config shipped with
-# OpenSSH is to specify options with their default value where
-# possible, but leave them commented.  Uncommented options override the
-# default value.
-
 # Include /etc/ssh/sshd_config.d/*.conf
 
 Port 22
@@ -106,8 +95,8 @@ PermitTunnel no
 ChrootDirectory none
 VersionAddendum none
 
-# no default banner path
-#Banner none
+# No default banner path
+# Banner none
 
 # Allow client to pass locale and color environment variables
 AcceptEnv LANG LC_* COLORTERM NO_COLOR

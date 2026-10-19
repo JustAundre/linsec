@@ -12,10 +12,10 @@ Run the `mysql_secure_installation` command and answer its prompts as needed.
 
 This script covers the following:
 
-- Set non-default password for SQL `root` user
-- Disables remote login for the SQL `root` user
-- Disables anonymous users
-- Removes test databases and respective permissions
+1. Set non-default password for SQL `root` user
+1. Disables remote login for the SQL `root` user
+1. Disables anonymous users
+1. Removes test databases and respective permissions
 
 ## Audit Authorization
 

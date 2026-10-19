@@ -5,18 +5,25 @@
 
 
 #
-# Enforce Password Expiries
+# Change Expiries (for future users)
+#
+reconfig -x replace PASS_MAX_DAYS 31 /etc/login.defs
+reconfig -x replace PASS_MIN_DAYS 3 /etc/login.defs
+reconfig -x replace PASS_WARN_AGE 27 /etc/login.defs
+
+
+
+
+
+#
+# Change Expiries (for existing users)
 #
 for entry in "${passwd[@]}"; do
 	IFS=':' read -rd $'\n' user hash uid gid gecos home shell <<<"${entry}"
-	[[ ${shell} =~ /('nologin'|'false')$ ]] && continue
-	# Skips the iterated user if they're the user running the script
-	# Apply the password age restrictions to the user
-	# Sets the date they last changed their password to current date to avoid accidental lockouts
-	[[ ${user} == "${SUDO_USER}" ]] && continue
+	[[ ${shell} =~ /('nologin'|'false')$ || ${user} == "${SUDO_USER}" ]] && continue
 	timestamp="$(date +%Y-%m-%d)"
-	chage -m 7 -M 90 -W 14 "${user}" &&
-		log i "Set minimum password reset delay to 1 week, mandatory reset to 90 days, and warning at 2 weeks for user: ${user@Q}."
+	chage -m 3 -M 31 -W 27 "${user}" &&
+		log i "Set password min/max/warn timings to 3/31/27 (in days) for user: ${user@Q}."
 	chage -d "${timestamp}" "${user}" &&
-		log i "Changed password age for user ${user@Q} to ${timestamp}"
+		log i "Set date since last password change for user ${user@Q} to ${timestamp@Q}."
 done

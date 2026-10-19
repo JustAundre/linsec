@@ -1,0 +1,12 @@
+[Unit]
+Description=Disables the unloading/loading of kernel modules some time after boot.
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStartPre=sleep 10
+ExecStart=sysctl -w kernel.modules_disabled=1
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
