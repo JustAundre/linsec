@@ -167,7 +167,7 @@ RemoveIPC=true
 #	AF_SMC AF_KCM AF_QIPCRTR AF_SMC AF_RDS
 #	AF_IUCV AF_VSOCK AF_XDP AF_MCTP
 # Allows local comms and IPv4/6 traffic.
-# Looking to disable remote connectiosn completely? Use PrivateNetwork=true
+# Looking to disable remote connections completely? Use PrivateNetwork=true
 # Looking to disable IPC? Use RemoveIPC=true
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 

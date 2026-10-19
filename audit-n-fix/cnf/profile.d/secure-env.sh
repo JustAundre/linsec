@@ -3,36 +3,33 @@
 {
 	# Set secure/safe shell configurations
 	set +o xtrace verbose monitor nolog ignoreeof
-	set -o functrace errtrace pipefail nounset noclobber
+	set -o functrace errtrace pipefail noclobber
 	shopt -s histappend histverify cmdhist dotglob globstar interactive_comments
 	shopt -u cdable_vars cdspell dirspell extglob nocaseglob nocasematch expand_aliases progcomp
 	umask 077
 	#
 	# Lock down variables
-	declare -rx PROMPT_COMMAND='history -a; history -w; sleep .15'
-	declare -rx HISTIGNORE=
-	declare -rx HISTCONTROL=ignoreboth
-	declare -rx LD_PRELOAD=
-	declare -rx HISTSIZE=-1
-	declare -rx HISTFILESIZE=-1
-	PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-	TTY="$(tty)"
-	declare -rx TTY="${TTY##*/}"
-	declare -rx SSH_TTY="${TTY}"
+	PROMPT_COMMAND='history -a; history -w'
 	UID="$(< /proc/self/loginuid)"
-	[[ "${UID}" == 4294967295 ]] && UID="$(id -u)"
-	declare -rx UID
-	USER="$(id -nu)"
-	HOME="$(getent passwd "${USER}" | cut -f6)"
+	[[ ${UID} == 4294967295 ]] && UID="$(id -u)"
+	USER="$(id -nu "${UID}")"
+	HOME=~${USER}
+	LOGNAME="${USER}"
+	LD_PRELOAD=''
+	HISTFILE="${HOME}/.bash_history"
+	HISTSIZE='-1'
+	HISTFILESIZE='-1'
+	HISTIGNORE=''
+	HISTCONTROL='ignoreboth'
 	HOSTNAME="$(hostname)"
-	declare -rx USER HOME HOSTNAME
-	declare -rx LOGNAME="${USER}"
-	declare -rx HISTFILE="${HOME}/.bash_history"
+	TTY="$(tty)"
+	TTY="${TTY##*/}"
+	SSH_TTY="${TTY}"
 	for var in SSH_CONNECTION SSH_CLIENT; do
-		[[ -z "${var}" ]] && declare -rx "${var}=Local"
+		[[ -z "${var}" ]] && "${var}=Local"
 	done
-	declare -rx SSH_ORIGINAL_COMMAND
+	declare -rx UID USER HOME LOGNAME LD_PRELOAD HISTFILE HISTSIZE HISTFILESIZE HISTIGNORE HISTCONTROL HOSTNAME SSH_CONNECTION TTY SSH_TTY SSH_CLIENT SSH_ORIGINAL_COMMAND
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics
 	builtin enable -n set shopt umask kill builtin command getopts unalias ulimit disown enable times alias echo printf
-} &> /dev/null
+} &>/dev/null

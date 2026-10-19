@@ -4,7 +4,7 @@ firewalls=(
 	'Uncomplicated Firewall (UFW)'
 	'Firewall Daemon (FirewallD)'
 )
-if hash pfctl &> /dev/null; then
+if hash pfctl; then
 	selection='Packet Filters (pf)'
 else
 	selection="$(PS2='Select your firewall of choice' cl-new "${firewalls[@]}")"
@@ -12,16 +12,16 @@ fi
 case "${selection}" in
 *'(UFW)'*)
 	modprobe iptables iptables_filter
-	mv -v /etc/ufw{,~}
-	case "${pkg_mgr}" in
+	mv -v /etc/ufw{,'.bak'}
+	case "${pkg_backend}" in
 	'apt-get')
-		"${pkg_mgr}" install --reinstall -y ufw
+		"${pkg_backend}" install --reinstall -y ufw -o Dpkg::Options::='--force-confnew' -o Dpkg::Options::='--force-confmiss'
 		;;
 	'dnf'|'yum')
-		"${pkg_mgr}" install -y ufw
+		"${pkg_backend}" install -y ufw
 		;;
 	'pacman')
-		"${pkg_mgr}" -S ufw --noconfirm
+		"${pkg_backend}" -S ufw --noconfirm
 		;;
 	*)
 		log e 'Package manager not supported.'
@@ -29,27 +29,25 @@ case "${selection}" in
 		;;
 	esac
 	mkdir -p /etc/ufw
-	true >> /etc/ufw/before.rules
-	true >> /etc/ufw/before6.rules
-	true >> /etc/ufw/after.rules
-	true >> /etc/ufw/after6.rules
-	systemctl unmask ufw
-	systemctl enable --now ufw
+	true >>/etc/ufw/before.rules 3>>/etc/ufw/before6.rules 4>>/etc/ufw/after.rules 5>>/etc/ufw/after6.rules
 	ufw reset
 	ufw default deny incoming
 	ufw default allow outgoing
+	systemctl unmask ufw
+	systemctl enable --now ufw
+	ufw --force enable
 	;;
 *'(FirewallD)'*)
-	mv -v /etc/firewalld{,~}
-	case "${pkg_mgr}" in
+	mv -v /etc/firewalld{,'.bak'}
+	case "${pkg_backend}" in
 	'apt-get')
-		"${pkg_mgr}" install --reinstall -y firewalld
+		"${pkg_backend}" install --reinstall -y firewalld -o Dpkg::Options::='--force-confnew' -o Dpkg::Options::='--force-confmiss'
 		;;
 	'dnf'|'yum')
-		"${pkg_mgr}" install -y firewalld
+		"${pkg_backend}" install -y firewalld
 		;;
 	'pacman')
-		"${pkg_mgr}" -S --noconfirm firewalld
+		"${pkg_backend}" -S --noconfirm firewalld
 		;;
 	*)
 		log e 'Package manager not supported.'
@@ -75,7 +73,7 @@ case "${selection}" in
 	;;
 *'(pf)'*)
 	pkg install -fy FreeBSD-pf && log i 'Reinstalled "Packet Filters" package.'
-	mv -v /etc/pf.conf{,~} && log i 'Backed up current pf configuration.'
+	mv -v /etc/pf.conf{,'.bak'} && log i 'Backed up current pf configuration.'
 	install -o 0 -g wheel -m 640 cnf/pf.conf /etc/pf.conf && log i 'Installed preset pf configuration.'
 	if pfctl -nf /etc/pf.conf; then
 		log i 'Passed syntax check.'
@@ -83,11 +81,11 @@ case "${selection}" in
 		pfctl -f /etc/pf.conf && log i 'Reloaded pf configuration.'
 	else
 		log e 'New pf configuration failed syntax check.'
-		if [[ -f '/etc/pf.conf~' ]]; then
-			mv -vf /etc/pf.conf{~,} && log i 'Restored original pf configuration.'
+		if [[ -f '/etc/pf.conf.bak' ]]; then
+			mv -vf /etc/pf.conf{'.bak',} && log i 'Restored original pf configuration.'
 			pfctl -f /etc/pf.conf && log i 'Reloaded original pf configuration.'
 		else
-			rm -v /etc/pf.conf{,~}
+			rm -v /etc/pf.conf{,'.bak'}
 		fi
 	fi
 	service pf restart
