@@ -1,0 +1,21 @@
+name: sync-upstream
+permissions:
+  contents: write
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: |
+          git config user.name "sync-bot"
+          git config user.email "sync-bot@users.noreply.github.com"
+          curl https://raw.githubusercontent.com/trumb/nginx-hardening/refs/heads/main/security-hardening.conf > cnf/security-hardening.conf || exit 1
+          git add cnf/security-hardening.conf
+          git diff --cached --quiet || git commit -m "update(cnf/security-hardening.conf): pull upstream changes."
+          git push
