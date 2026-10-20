@@ -9,10 +9,8 @@
 #
 # CD into the script's parent directory.
 cd "$(dirname "${0}")" || exit 1
-#
-# Source library commands/vars
-[[ -d "../lib/" ]] || exit 2
-for function in "../lib/"*; do
+[[ -d "./lib" ]] || exit 2
+for function in "./lib/"*; do
 	source "${function}"
 done
 #

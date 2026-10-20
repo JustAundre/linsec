@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#
+# Versioned git pre-commit hook, installed via hooks/install.sh
+# (git config core.hooksPath hooks). Runs the repository linter scoped to
+# the files staged for this commit.
+
+set -u
+cd "$(dirname "${0}")/.." || exit 1
+./hooks/update.sh
+./hooks/lint.sh --staged
