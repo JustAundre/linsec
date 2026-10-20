@@ -4,8 +4,7 @@ set -u
 MODE='all'
 STRICT=0
 FIX=0
-HELP_PATH="$(dirname "${0}")/lint.sh.help.md"
-
+HELP_PATH="${0}.help.md"
 for arg in "${@}"; do
 	case "${arg}" in
 		--staged) MODE='staged' ;;
@@ -79,6 +78,7 @@ for file in "${files[@]}"; do
 			echo "i: ${file@Q}: Fixed trailing whitespace."
 		else
 			echo "E: ${file@Q}: Found trailing whitespace." >&2
+			# shellcheck disable=SC2001
 			sed 's/^/    /' <<<"${matches}"
 			((failures++))
 		fi
@@ -98,7 +98,7 @@ done
 if command -v shellcheck &>/dev/null; then
 	for file in "${files[@]}"; do
 		if ! shellcheck "${file}"; then
-			if (( STRICT )); then
+			if ((STRICT)); then
 				echo "W: ${file@Q}: shellcheck:" >&2
 				((failures++))
 			else
@@ -111,11 +111,11 @@ else
 	echo 'E: shellcheck not installed; skipped lint.' >&2
 fi
 
-if [[ ${#files[@]} -eq 0 ]]; then
+if ((${#files[@]})); then
 	echo 'i: No shellscripts to check.'
-elif (( findings > 0 )); then
+elif ((findings > 0)); then
 	echo "W: ${#files[@]} file(s) checked, ${findings} advisory finding(s)." >&2
-elif (( failures > 0 )); then
+elif ((failures > 0)); then
 	echo "E: ${failures} failure(s) found; aborting..." >&2
 	exit 2
 else

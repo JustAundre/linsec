@@ -8,12 +8,14 @@
 # Environment Setup
 #
 set -u
+STRICT=0
 MODE='all'
 FIX=0
-HELP_PATH="$(dirname "${0}")/standardize-perms.sh.help.md"
+HELP_PATH="${0}.help.md"
 for arg in "${@}"; do
 	case "${arg}" in
 		--staged) MODE='staged' ;;
+		--strict) STRICT=1 ;;
 		--fix) FIX=1 ;;
 		-h|--help)
 			cat "${HELP_PATH}"
@@ -33,6 +35,7 @@ done
 #
 # Standardize File Permissions
 #
+files=()
 while read -r path; do
 	[[ "$(stat -c %a "${path}")" == 700 ]] || files+=("${path}")
 done < <(
@@ -42,8 +45,10 @@ done < <(
 		git ls-files -z
 	fi
 )
-((${#files[@]})) && if ((FIX)); then
+((${#files[@]})) || exit 0
+if ((FIX)); then
 	xargs -L 250 -- chmod 700 <<<"${files[@]}"
 else
 	printf '%s\0' "${files[@]}"
+	((STRICT)) || exit 2
 fi
