@@ -17,10 +17,6 @@ for arg in "${@}"; do
 		--staged) MODE='staged' ;;
 		--strict) STRICT=1 ;;
 		--fix) FIX=1 ;;
-		-h|--help)
-			cat "${HELP_PATH}"
-			exit 0
-			;;
 		*)
 			echo "E: unknown option: ${arg@Q}" >&2
 			exit 1

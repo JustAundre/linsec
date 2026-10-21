@@ -4,16 +4,11 @@ set -u
 MODE='all'
 STRICT=0
 FIX=0
-HELP_PATH="${0}.help.md"
 for arg in "${@}"; do
 	case "${arg}" in
 		--staged) MODE='staged' ;;
 		--strict) STRICT=1 ;;
 		--fix) FIX=1 ;;
-		-h|--help)
-			cat "${HELP_PATH}"
-			exit 0
-			;;
 		*)
 			echo "E: unknown option: ${arg@Q}" >&2
 			exit 1
