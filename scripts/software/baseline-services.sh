@@ -67,8 +67,7 @@ case "${init}" in
 		;;
 	'rpm')
 		for path in /etc/rc.d/init.d/*; do
-			rpm -qf "${path}" 2>/dev/null | log i
-			rpm -qf "${path}" >/dev/null 2>&1 | log w
+			rpm -qf "${path}" 2>(log w) | log i
 		done
 		;;
 	esac

@@ -34,6 +34,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	for selection in "${selections[@]}"; do
 		case "${selection}" in
 		'Enforce password quality')
+			pkg-mgr install libpam-pwquality
 			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality /usr/share/pam-configs/pwquality
 			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /etc/security/pwquality.conf
 			;;
@@ -77,11 +78,11 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	# Download base image for FreeBSD system
 	trap '[[ -f base.txz ]] && rm -v base.txz' EXIT
 	base_sys_url="https://download.freebsd.org/releases/$(uname -m)/$(freebsd-version | cut -d'-' -f1,2)/base.txz"
-	log i "Fetching base system image from \"${base_sys_url}\"..."
+	log i "Fetching base system image from ${base_sys_url@Q}..."
 	fetch -o 'base.txz' -asr "${base_sys_url}" 2>&1 1>&2 | log e || exit 12
 	#
 	# Backup existing /etc/pam.d directory and extract base.
-	mv /etc/pam.d{,~}
+	mv /etc/pam.d{,'.bak'}
 	tar -xf base.txz -C /etc/pam.d/ etc/pam.d
 	#
 	# Audit PAM configuration overrides
@@ -104,3 +105,32 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	exit 11
 	;;
 esac
+
+
+
+
+
+
+#
+# Change Expiries (for future users)
+#
+reconfig -x replace PASS_MAX_DAYS 31 /etc/login.defs
+reconfig -x replace PASS_MIN_DAYS 7 /etc/login.defs
+reconfig -x replace PASS_WARN_AGE 27 /etc/login.defs
+
+
+
+
+
+#
+# Change Expiries (for existing users)
+#
+for entry in "${passwd[@]}"; do
+	IFS=':' read -rd $'\n' user hash uid gid gecos home shell <<<"${entry}"
+	[[ ${shell} =~ /('nologin'|'false')$ || ${user} == "${SUDO_USER}" ]] && continue
+	timestamp="$(date +%Y-%m-%d)"
+	chage -m 7 -M 31 -W 27 "${user}" &&
+		log i "Set password min/max/warn timings to 3/31/27 (in days) for user: ${user@Q}."
+	chage -d "${timestamp}" "${user}" &&
+		log i "Set date since last password change for user ${user@Q} to ${timestamp@Q}."
+done

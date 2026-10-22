@@ -4,7 +4,7 @@ firewalls=(
 	'Uncomplicated Firewall (UFW)'
 	'Firewall Daemon (FirewallD)'
 )
-if hash pfctl; then
+if hash pfctl &>/dev/null; then
 	selection='Packet Filters (pf)'
 else
 	selection="$(PS2='Select your firewall of choice' cl-new "${firewalls[@]}")"

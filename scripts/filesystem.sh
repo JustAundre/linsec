@@ -17,7 +17,7 @@ find / -xephem -nogroup -print0 > "${log_dir}/no-group.txt" &
 find / -xephem -xtype l -print0 > "${log_dir}/broken-symlinks.txt" &
 find / -xephem -name '*[^[:ascii:]]*' -print0 > "${log_dir}/non-ascii-paths.txt" &
 find / -xephem -name '*[^a-zA-Z0-9_.]*' -print0 > "${log_dir}/non-alphanumeric-leads.txt" &
-find /etc '(' -uid "+${id_bounds[SYS_UID_MAX]}" -o -gid "+${id_bounds[SYS_GID_MAX]}" ')' > "${log_dir}/etc-user-owned.txt" &
+find /etc '(' -uid +"${id_bounds[SYS_UID_MAX]}" -o -gid +"${id_bounds[SYS_GID_MAX]}" ')' > "${log_dir}/etc-user-owned.txt" &
 find /home -mindepth 2 -maxdepth 2 -type f '(' -name .rhosts -o -name .shosts -o -name .netrc -o -name .forward -o -path '/home/*/ssh/rc' ')' > "${log_dir}/bad-user-configs.txt" &
 wait
 
@@ -28,7 +28,8 @@ wait
 #
 # Login.defs
 #
-reconfig -x replace UMASK 077 /etc/login.defs
+reconfig -x replace UMASK 027 /etc/profile
+reconfig -x replace UMASK 027 /etc/login.defs
 reconfig -x replace USERGROUPS_ENAB yes /etc/login.defs
 reconfig -x replace CREATE_HOME yes /etc/login.defs
 
@@ -101,7 +102,7 @@ for entry in "${passwd[@]}"; do
 	perm-fix -m 600 -o "${uid}" -g "${gid}" "${home}/.ssh/authorized_keys" "${home}/.ssh/id_"*
 	log i "Comparing home contents with factory home directory for user: ${user@Q}"
 	pause 0
-	diff -r /etc/skel "${home}" --color=auto --unified | less -R
+	diff -r /etc/skel "${home}" --color=force --unified | less -R
 done
 #
 # APT keyrings
@@ -147,3 +148,7 @@ if [[ -n ${auditd_log_file} && -d ${auditd_log_dir} ]]; then
 	find -- "${auditd_log_dir}" -type d -print0 | perm-fix -m 750 -o 0 -g "${group}"
 	unset group
 fi
+#
+# Disable core dumping
+reconfig -x 'replace' -d '=' Storage none /etc/systemd/coredump.conf
+reconfig -x 'replace' -d '=' ProcessSizeMax 0 /etc/systemd/coredump.conf

@@ -1,39 +1,5 @@
 # Manual Tasks
 
-## Verifying Integrity
-
-### Manual check
-
-```bash
-# Debian
-dpkg -V
-
-# RHEL (both modern & legacy)
-rpm -Va
-
-# Arch
-pacman -Qk
-
-# FreeBSD
-pkg check -sa
-```
-
-### Automatic reinstall
-
-```bash
-# Debian
-dpkg -V | awk '$1 ~ /^..5/ {print $2}' | xargs -r dpkg -S | cut -d: -f1 | sort -u | sudo xargs -r apt-get install --reinstall -y -o Dpkg::Options::='--force-confnew' -o Dpkg::Options::='--force-confmiss'
-
-# RHEL (both modern & legacy)
-rpm -Va --nofiles | awk '{print $NF}' | xargs -r rpm -qf | sort -u | sudo xargs -r dnf reinstall -y
-
-# Arch
-pacman -Qk 2>&1 | awk '/gaps in/ {print $2}' | sudo xargs -r pacman -S --noconfirm
-
-# FreeBSD
-pkg check -sa --checksum 2>&1 | awk -F: '/checksum mismatch|missing/ {print $1}' | sort -u | sudo xargs -r pkg install -fy
-```
-
 ## Forensic & Audit Tooling
 
 These tools **report** problems; they don't fix them. Review findings before acting on them,

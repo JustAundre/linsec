@@ -48,7 +48,6 @@ pass=0
 until ((pass)); do
 	pass=1
 	"${EDITOR}" cnf/rsc-caps/limits.conf
-
 	while read -r domain type item value extra; do
 		# Ignore lines with extra trailing fields or empty values
 		if [[ -z "${domain}" || -z "${type}" || -z "${item}" || -z "${value}" || -n "${extra}" ]]; then
@@ -70,7 +69,6 @@ until ((pass)); do
 			break
 		fi
 	done < <(grep -Ev '^\s*(#|$)' cnf/rsc-caps/limits.conf)
-
 	if ((! pass)); then
 		log w 'There was a syntax error in your limits.conf.'
 		read -erp "Press [ENTER] to re-edit, or wait 10 seconds to exit." -t 10 || exit 10
