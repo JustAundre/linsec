@@ -33,5 +33,5 @@ install -o 0 -g 0 -m 640 -v cnf/sshd_config /etc/ssh/sshd_config
 #
 # Diff
 #
-diff /etc/ssh /etc/ssh~ -rp > "${log_dir}/ssh_config_diffs.txt"
-diff /etc/ssh /etc/ssh~ -rp --color=always | less -R
+diff /etc/ssh{,'.bak'} -rp > "${log_dir}/ssh_config_diffs.txt"
+diff /etc/ssh{,'.bak'} -rp --color=always | less -R

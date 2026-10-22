@@ -16,8 +16,8 @@ done
 #
 # Set editor
 export EDITOR
-hash "${EDITOR}" || for EDITOR in nano micro mcedit tilde joe e3 hx nvim vim vi kak emacs ed mp jed ash vis sam; do
-	hash "${EDITOR}" && break
+hash "${EDITOR}" &>/dev/null || for EDITOR in nano micro mcedit tilde joe e3 hx nvim vim vi kak emacs ed mp jed ash vis sam; do
+	hash "${EDITOR}" &>/dev/null && break
 done
 until hash "${EDITOR}"; do
 	log w 'The EDITOR variable is invalid or undeclared.'
@@ -25,7 +25,7 @@ until hash "${EDITOR}"; do
 done
 #
 # Performance optimizations, not strictly necessary but great to have enabled.
-for builtin in basename dirname cut head logname mkfifo mktmp realpath rm rmdir seq sleep tee tty uname ln unlink whoami; do
+for builtin in basename dirname cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
 	[[ -f /usr/lib/bash/${builtin} ]] && enable -f "/usr/lib/bash/${builtin}" "${builtin}"
 done
 unset builtin
@@ -62,7 +62,7 @@ while IFS='=' read -r key value; do
 	os_info["${key}"]="${value}"
 done < /etc/os-release
 for pkg_backend in apt-get dnf yum pacman pkg; do
-	hash "${pkg_backend}" && break
+	hash "${pkg_backend}" &>/dev/null && break
 	unset pkg_backend
 done
 export log_dir init int_users sys_users all_users os_info pkg_backend id_bounds
@@ -152,11 +152,11 @@ cat <<-EOF
 	           agape freedom of Linux
 	  ---{=========}###[@]###{===========}---
 
-	Suite version:			$(git log | head -n1)
-	Operating system:		$(uname -r)
-	Startup checks failed:		${#errors[@]}
-	Log directory:			${log_dir@Q}
-	# of logs:			$(files=("${log_dir}"/*.txt); printf '%d' "${#files[@]}")
+	Suite version:         $(git log | head -n1)
+	Operating system:      $(uname -r)
+	Startup checks failed: ${#errors[@]}
+	Log directory:         ${log_dir@Q}
+	# of logs:             $(files=("${log_dir}"/*.txt); printf '%d' "${#files[@]}")
 
 EOF
 exit 0

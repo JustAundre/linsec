@@ -9,14 +9,14 @@
 #
 # Edit/validify slices
 (while
-	systemd-analyze verify cnf/rsc-caps/slice-individual.slice 2>&1 | grep invalid ||
-	systemd-analyze verify cnf/rsc-caps/slice-shared.slice 2>&1 | grep invalid
+	systemd-analyze verify cnf/rsc-caps/slice-individual.slice >/dev/null 2>&1 | grep invalid ||
+	systemd-analyze verify cnf/rsc-caps/slice-shared.slice >/dev/null 2>&1 | grep invalid
 do
 	if ((! ran)); then
 		ran=1
 	else
 		log w 'SystemD found issue(s) with your configuration.'
-		log i $'After you resume, you\'ll be made to revise your configurations again.'
+		log i "After you resume, you'll be made to revise your configurations again."
 		pause 0
 	fi
 	"${EDITOR}" cnf/rsc-caps/slice-individual.slice cnf/rsc-caps/slice-shared.slice cnf/rsc-caps/limits.conf

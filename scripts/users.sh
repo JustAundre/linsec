@@ -8,16 +8,14 @@
 #
 # Environment Setup
 #
-mapfile -t shells < <(chsh -l)
+mapfile -t shells < <(grep -E '^/' /etc/shells)
 #
 # Compile vanity tags for display in checklists
 # Create reverse-lookup associative array for matching backwards-matching from vanity to IDs
 declare -A reverse_lookup
-confirm 'Exclude system users from audit'
-include_sys="${?}"
 for entry in "${passwd[@]}"; do
 	IFS=':' read -rd $'\n' user hash uid gid gecos home shell <<<"${entry}"
-	((!include_sys)) && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
+	confirm 'Exclude system users from audit' && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
 	user_vanities+=("$(id "${uid}") sh=${shell@Q}")
 	reverse_lookup["${user_vanities["$((${#user_vanities[@]} - 1))"]}"]="${user}"
 done
@@ -41,7 +39,9 @@ for selection in "${selections[@]}"; do
 		'Delete user'
 		'Lock user'
 		'Remove password'
-		'Change password'
+		'Set manual password'
+		'Set random password'
+		'Expire password'
 		'Change shell'
 		'Change UID'
 		'Change GID'
@@ -56,11 +56,15 @@ for selection in "${selections[@]}"; do
 	done
 	if ((index['Delete user'] && ${#selections_2[@]} > 1)); then
 		log e 'users.sh: [Delete] is mutually exclusive with all other options.'
-		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection}"
+		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection@Q}"
 		continue
-	elif ((index['Remove password'] && index['Change password'])); then
-		log e 'users.sh: [Remove password] is mutually exclusive with [Change password].'
-		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection}"
+	elif ((index['Remove password'] && index['Set manual password'] || index['Set random password'])); then
+		log e 'users.sh: [Remove password] is mutually exclusive with [Set manual/random password].'
+		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection@Q}"
+		continue
+	elif ((index['Set random password'] && index['Set manual password'])); then
+		log e 'users.sh: [Set manual/random password] are mutually exclusive with eachother.'
+		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection@Q}"
 		continue
 	fi
 	user="${reverse_lookup["${selection}"]}"
@@ -73,8 +77,16 @@ for selection in "${selections[@]}"; do
 	if ((index['Remove password'])); then
 		passwd "${user}" -d
 	fi
-	if ((index['Change password'])); then
+	if ((index['Set manual password'])); then
 		passwd "${user}"
+	fi
+	if ((index['Set random password'])); then
+		rng_passwd="$(tr < /dev/random --complement --delete '[a-zA-Z0-9!@#$%^&*()[]{};,.`~]' | head -c 16)"
+		echo "${user}:${rng_passwd}"
+		chpasswd <<<"${user}:${rng_passwd}"
+	fi
+	if ((index['Expire password'])); then
+		passwd -e "${user}"
 	fi
 	if ((index['Change shell'])); then
 		unset shell
@@ -93,12 +105,12 @@ for selection in "${selections[@]}"; do
 	fi
 	if ((index['Change GID'])); then
 		unset primary_group
-		primary_group="${reverse_lookup["$(PS2="Select the new primary group for user \"${user}\"" cl-new -o "${group_vanities[@]}")"]}"
+		primary_group="${reverse_lookup["$(PS2="Select the new primary group for ${user@Q}" cl-new -o "${group_vanities[@]}")"]}"
 		usermod -g "${primary_group}" "${user}"
 	fi
 	if ((index['Change supplementary groups'])); then
 		unset supplementary_groups selections_3
-		mapfile -td '' selections_3 < <(PS2="Select new supplementary groups for user \"${user}\"" cl-new -mo "${group_vanities[@]}")
+		mapfile -td '' selections_3 < <(PS2="Select new supplementary groups for ${user@Q}" cl-new -mo "${group_vanities[@]}")
 		for selection_3 in "${selections_3[@]}"; do
 			supplementary_groups+=("${reverse_lookup["${selection_3}"]}")
 		done
