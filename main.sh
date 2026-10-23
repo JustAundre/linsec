@@ -8,9 +8,10 @@
 # Environment Setup
 #
 # CD into the script's parent directory.
-cd "$(dirname "${0}")" || exit 1
-[[ -d "./bash-lib" ]] || exit 2
-for function in "./bash-lib/"*; do
+BASE_DIR="$(dirname -- "$(realpath -- "${0}")")"
+cd "${BASE_DIR}" || exit 1
+[[ -d './bash-lib' ]] || exit 2
+for function in ./bash-lib/*.sh; do
 	source "${function}"
 done
 #
@@ -46,13 +47,13 @@ unset builtin
 # Store package manager in variable
 log_dir="$(pwd)/logs/$(date)" && mkdir -p "${log_dir}" || exit 3
 init="$(ps -p 1 -o comm=)"
-umask 0077
+umask 077
 set -o pipefail
 shopt -s nullglob
 declare -A id_bounds
 while IFS=' ' read -rd $'\n' key value; do
 	id_bounds["${key}"]="${value}"
-done < <(awk '/^#?\s*(SYS_)?(U|G)ID_(MIN|MAX)/ {print $1, $2}' /etc/login.defs)
+done < <(awk '/^#?[[:space:]]*(SYS_)?(U|G)ID_(MIN|MAX)/ {print $1, $2}' /etc/login.defs)
 mapfile -t passwd < /etc/passwd
 mapfile -t group < /etc/group
 declare -A os_info
@@ -66,6 +67,37 @@ for pkg_backend in apt-get dnf yum pacman pkg; do
 	unset pkg_backend
 done
 export log_dir init int_users sys_users all_users os_info pkg_backend id_bounds
+
+
+
+
+
+#
+# Environment Check
+#
+log i 'Running environment checks...'
+#
+# 1. Is this running in Bash & NOT sourced?
+# 2. Does this script have root permissions?
+# 3. Is the active init. system SystemD?
+# 4. Is the output a terminal?
+[[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('script cannot be sourced and requires Bash interpreter.')
+[[ ${EUID} -eq 0 ]] || errors+=("UID 0 required—try: sudo ${0}.")
+[[ ${init} =~ ^(systemd|init)$ ]] || errors+=('your system must be using SystemD or init).')
+[[ -t 0 ]] || errors+=('interactive terminal required.')
+((${#pkg_backend})) || errors+=('unable to find supported package manager in PATH variable.')
+((${#id_bounds[@]} == 8)) || errors+=("unable to completely detect this system's UID and GID boundings; check '/etc/login.defs'.")
+#
+# If any of the above, alert.
+if [[ ${#errors[@]} -ge 1 ]]; then
+	for error in "${errors[@]}"; do
+		log e "${error}"
+	done
+	log e "failed ${#errors[@]} startup checks."
+	confirm 'Proceed anyway' || exit 4
+else
+	log i 'Passed environment checks.'
+fi
 
 
 
@@ -91,34 +123,6 @@ pause 0
 
 
 #
-# Environment Check
-#
-log i 'Running environment checks...'
-#
-# 1. Is this running in Bash & NOT sourced?
-# 2. Does this script have root permissions?
-# 3. Is the active init. system SystemD?
-# 4. Is the output a terminal?
-[[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('main.sh: script cannot be sourced and requires Bash interpreter.')
-[[ ${EUID} -eq 0 ]] || errors+=("main.sh: UID 0 required—try: sudo ${0}.")
-[[ ${init} =~ ^(systemd|init)$ ]] || errors+=('main.sh: your system must be using SystemD or init).')
-[[ -t 0 ]] || errors+=('main.sh: interactive terminal required.')
-((${#pkg_backend})) || errors+=('main.sh: unable to find supported package manager in PATH variable.')
-((${#id_bounds[@]} == 8)) || errors+=("main.sh: unable to completely detect this system's UID and GID boundings; check '/etc/login.defs'.")
-#
-# If any of the above, alert.
-if [[ ${#errors[@]} -ge 1 ]]; then
-	log e "${errors[@]}" "Failed ${#errors[@]} startup checks."
-	confirm 'Proceed anyway' || exit 4
-else
-	log i 'Passed environment checks.'
-fi
-
-
-
-
-
-#
 # Script Selection
 #
 mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
@@ -133,7 +137,8 @@ for script in "${selections[@]}"; do
 		source "${script}"
 	)
 	if ((${?} == 130)); then
-		log i 'Sending SIGINT (CTRL + C) during script execution sends you back to the main menu.' 'Send SIGINT again to terminate the script.'
+		log i 'Sending SIGINT (CTRL + C) during script execution sends you back to the main menu.'
+		log i 'Send SIGINT again to terminate the script.'
 		pause
 		exec "${0}"
 	fi
