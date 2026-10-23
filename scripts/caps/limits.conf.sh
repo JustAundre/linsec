@@ -26,6 +26,7 @@ valid_items=(
 	rtprio
 	rttime
 	sigpending
+	stack
 	nofile
 )
 #
@@ -50,26 +51,26 @@ until ((pass)); do
 	"${EDITOR}" cnf/rsc-caps/limits.conf
 	while read -r domain type item value extra; do
 		# Ignore lines with extra trailing fields or empty values
-		if [[ -z "${domain}" || -z "${type}" || -z "${item}" || -z "${value}" || -n "${extra}" ]]; then
+		if [[ -z ${domain} || -z ${type} || -z ${item} || -z ${value} || -n ${extra} ]]; then
 			pass=0
 			break
 		fi
 		#
 		# Validate domain, type (soft, hard, or -), item, and integer (plus -1 or 'unlimited')
 		if ! {
-			[[ "${domain}" =~ ^@[0-9]+(:[0-9]+)?$ || "${domain}" =~ ^[0-9]+(:[0-9]+)?$ || "${domain}" == '*' ]] ||
-			{ [[ "${domain}" =~ ^[@%]([a-zA-Z_.-]{1,32})$ ]] && getent group "${BASH_REMATCH[1]}" &>/dev/null; } ||
-			{ [[ "${domain}" =~ ^([a-zA-Z_.-]{1,32})$ ]] && getent passwd "${BASH_REMATCH[1]}" &>/dev/null; }
+			[[ ${domain} =~ ^@[0-9]+(:[0-9]+)?$ || ${domain} =~ ^[0-9]+(:[0-9]+)?$ || ${domain} == '*' ]] ||
+			{ [[ ${domain} =~ ^[@%]([a-zA-Z_.-]{1,32})$ ]] && getent group "${BASH_REMATCH[1]}" &>/dev/null; } ||
+			{ [[ ${domain} =~ ^([a-zA-Z_.-]{1,32})$ ]] && getent passwd "${BASH_REMATCH[1]}" &>/dev/null; }
 		} || ! {
-			[[ "${type}" =~ ^(soft|hard|-)$ ]] &&
-			[[ "${value}" =~ ^(-1|[0-9]+|unlimited)$ ]] &&
+			[[ ${type} =~ ^(soft|hard|-)$ ]] &&
+			[[ ${value} =~ ^(-1|[0-9]+|unlimited)$ ]] &&
 			contains_element "${item}" "${valid_items[@]}"
 		}; then
 			pass=0
 			break
 		fi
 	done < <(grep -Ev '^\s*(#|$)' cnf/rsc-caps/limits.conf)
-	if ((! pass)); then
+	if ((!pass)); then
 		log w 'There was a syntax error in your limits.conf.'
 		read -erp "Press [ENTER] to re-edit, or wait 10 seconds to exit." -t 10 || exit 10
 	fi

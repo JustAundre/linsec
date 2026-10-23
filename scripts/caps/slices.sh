@@ -9,10 +9,10 @@
 #
 # Edit/validify slices
 (while
-	systemd-analyze verify cnf/rsc-caps/slice-individual.slice >/dev/null 2>&1 | grep invalid ||
-	systemd-analyze verify cnf/rsc-caps/slice-shared.slice >/dev/null 2>&1 | grep invalid
+	systemd-analyze verify cnf/rsc-caps/slice-individual.slice >/dev/null 2>&1 | grep Invalid ||
+	systemd-analyze verify cnf/rsc-caps/slice-shared.slice >/dev/null 2>&1 | grep Invalid
 do
-	if ((! ran)); then
+	if ((!ran)); then
 		ran=1
 	else
 		log w 'SystemD found issue(s) with your configuration.'
