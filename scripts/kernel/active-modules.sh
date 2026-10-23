@@ -8,7 +8,7 @@
 # Active Module Audit
 #
 # Fetch loaded kernel modules'...
-mapfile -td '' mods < <(grep -Eo '^[^ ]+' /proc/modules | sort)
+mapfile -t mods < <(grep -Eo '^[^ ]+' /proc/modules | sort)
 for mod in "${mods[@]}"; do
 	# Descriptions
 	desc="$(modinfo -d "${mod}" | tr -d '\n')"
