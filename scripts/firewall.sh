@@ -11,7 +11,7 @@ else
 fi
 case "${selection}" in
 *'(UFW)'*)
-	modprobe iptables iptables_filter
+	xargs -n 1 modprobe <<<'ip_tables iptable_filter'
 	mv -v /etc/ufw{,'.bak'}
 	case "${pkg_backend}" in
 	'apt-get')
