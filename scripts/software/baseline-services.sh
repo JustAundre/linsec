@@ -65,7 +65,7 @@ case "${init}" in
 		pkg which /etc/rc.d/* | grep -v "not found" | log i
 		pkg which /etc/rc.d/* | grep "not found" | log w
 		;;
-	'rpm')
+	'dnf'|'yum')
 		for path in /etc/rc.d/init.d/*; do
 			rpm -qf "${path}" 2>(log w) | log i
 		done
