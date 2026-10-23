@@ -39,6 +39,8 @@ cp -av "${nginx[root]}" "${nginx[backup]}"
 #
 # Nginx Setup
 #
+mkdir -v -p "${nginx[snippets]}"
+#
 # Remove conflicting entries from nginx.conf
 log i "Deduplicating ${nginx[config]@Q}..."
 directives=(
@@ -52,9 +54,9 @@ directives=(
 	"ssl_ciphers"
 	"ssl_session_cache"
 	"ssl_session_timeout"
-	"include ${nginx[snippets]}/security-hardening.conf"
-	"include ${nginx[snippets]}/ssl-hardening.conf"
-	"include ${nginx[snippets]}/server-tls.conf"
+	"include ${nginx[snippets]}/security-hardening.conf;"
+	"include ${nginx[snippets]}/ssl-hardening.conf;"
+	"include ${nginx[snippets]}/server-tls.conf;"
 	"listen"
 )
 for directive in "${directives[@]}"; do
@@ -74,8 +76,9 @@ cat > "${nginx[snippets]}/server-tls.conf" <<-EOF
 EOF
 perm-fix -m 640 -o 0 -g 0 "${nginx[snippets]}/server-tls.conf"
 #
-# Import hardening configuration snippet
-install -m 640 -o 0 -g 0 -Dv cnf/nginx/security-hardening.conf "${nginx[snippets]}/security-hardening.conf"
+# Import hardening configuration snippets
+install -m 640 -o 0 -g 0 -D -v cnf/nginx/ssl-hardening.conf "${nginx[snippets]}/ssl-hardening.conf"
+install -m 640 -o 0 -g 0 -D -v cnf/nginx/security-hardening.conf "${nginx[snippets]}/security-hardening.conf"
 #
 # Import snippets to all server blocks
 insq "${nginx[config]}" 'server[[:space:]]*\{' append 1\
@@ -93,6 +96,7 @@ insq "${nginx[config]}" 'server[[:space:]]*\{' append 1\
 # Install fail2ban with the standard nginx jails
 # TODO: Needs refactoring
 if confirm 'Install, enable and configure fail2ban for Nginx'; then
+	pkg-mgr install fail2ban
 	mkdir -vp /etc/fail2ban/jail.d
 	install -vm 640 -o 0 -g 0 cnf/f2b/nginx.local /etc/fail2ban/jail.d/nginx.local
 	systemctl enable --now fail2ban
@@ -109,7 +113,7 @@ if ! nginx -t; then
 	log e 'Configuration failed validation.'
 	log i 'Reverting configuration to backup...'
 	rm -rfv "${nginx[root]}"
-	mv -v "${nginx[root]}" "${nginx[backup]}"
+	mv -v "${nginx[backup]}" "${nginx[root]}"
 	systemctl restart nginx
 	exit 12
 fi
