@@ -8,7 +8,10 @@
 # Reset & Regen
 #
 # Backup existing SSH configs
-mv -v /etc/ssh{,'.bak'}
+declare -A ssh
+ssh[root]='/etc/ssh'
+ssh[backup]="${ssh[root]}.$(date +%s).bak"
+mv -v "${ssh[root]}" "${ssh[backup]}"
 #
 # Reinstall SSHD
 case "${pkg_backend}" in
@@ -33,5 +36,5 @@ install -o 0 -g 0 -m 640 -v cnf/sshd_config /etc/ssh/sshd_config
 #
 # Diff
 #
-diff /etc/ssh{,'.bak'} -rp > "${log_dir}/ssh_config_diffs.txt"
-diff /etc/ssh{,'.bak'} -rp --color=always | less -R
+diff "${ssh[root]}" "${ssh[backup]}" -r -p > "${log_dir}/ssh_config_diffs.txt"
+diff "${ssh[root]}" "${ssh[backup]}" -r -p --color=always | less -R

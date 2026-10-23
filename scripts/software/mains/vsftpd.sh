@@ -36,7 +36,7 @@ if [[ ! -f "${cert_file}" ]]; then
 fi
 #
 # Install preset configuration
-install -o 0 -g 0 -m 640 -v "cnf/$(basename "${vsftpd_config}")" "${vsftpd_config}"
+install -o 0 -g 0 -m 640 -v "cnf/${vsftpd_config##*/}" "${vsftpd_config}"
 
 
 
@@ -47,6 +47,7 @@ install -o 0 -g 0 -m 640 -v "cnf/$(basename "${vsftpd_config}")" "${vsftpd_confi
 # Configuration Validation
 #
 # Vsftpd has no syntax-check flag; a valid config keeps the daemon running in the foreground, so use a timeout. Exit 124 means it survived until killed (valid).
+systemctl stop vsftpd
 timeout 2 vsftpd "${vsftpd_config}" &>/dev/null
 if ((${?} != 124)); then
 	log e 'Configuration validation failed.'
