@@ -4,6 +4,6 @@ Priority: 1024
 Conflicts: cracklib
 Password-Type: Primary
 Password:
-	requisite	   pam_pwquality.so	remember=3  retry=3
+	requisite	   pam_pwquality.so	retry=3
 Password-Initial:
-	requisite	   pam_pwquality.so	remember=3  retry=3
+	requisite	   pam_pwquality.so	retry=3
