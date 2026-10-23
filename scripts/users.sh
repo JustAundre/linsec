@@ -14,13 +14,13 @@ mapfile -t shells < <(grep -E '^/' /etc/shells)
 # Create reverse-lookup associative array for matching backwards-matching from vanity to IDs
 declare -A reverse_lookup
 for entry in "${passwd[@]}"; do
-	IFS=':' read -rd $'\n' user hash uid gid gecos home shell <<<"${entry}"
+	IFS=':' read -rd $'\n' user _ uid gid _ _ shell <<<"${entry}"
 	confirm 'Exclude system users from audit' && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
-	user_vanities+=("$(id "${uid}") sh=${shell@Q}")
+	user_vanities+=("$(id -- "${user}") sh=${shell@Q}")
 	reverse_lookup["${user_vanities["$((${#user_vanities[@]} - 1))"]}"]="${user}"
 done
 for entry in "${group[@]}"; do
-	IFS=':' read -rd $'\n' group hash gid members <<<"${entry}"
+	IFS=':' read -rd $'\n' group _ gid _ <<<"${entry}"
 	group_vanities+=("gid=${gid}(${group})")
 	reverse_lookup["${group_vanities["$((${#group_vanities[@]} - 1))"]}"]="${group}"
 done
@@ -69,10 +69,13 @@ for selection in "${selections[@]}"; do
 	fi
 	user="${reverse_lookup["${selection}"]}"
 	if ((index['Delete user'])); then
+		[[ ${user} == "$(logname)" || ${user} == 'root' ]] && confirm "Are you really sure you want to delete ${user@Q}?"
 		userdel -rf "${user}"
 	fi
 	if ((index['Lock user'])); then
-		passwd "${user}" -l
+		[[ ${user} == "$(logname)" || ${user} == 'root' ]] &&
+			confirm "Are you really sure you want to lock ${user@Q}" &&
+			passwd "${user}" -l
 	fi
 	if ((index['Remove password'])); then
 		passwd "${user}" -d
@@ -81,7 +84,9 @@ for selection in "${selections[@]}"; do
 		passwd "${user}"
 	fi
 	if ((index['Set random password'])); then
-		rng_passwd="$(tr < /dev/random --complement --delete '[a-zA-Z0-9!@#$%^&*()[]{};,.`~]' | head -c 16)"
+		rng_passwd="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 4)"
+		rng_passwd+="$(mktemp XXXXXXXX --dry-run)"
+		rng_passwd+="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 4)"
 		echo "${user}:${rng_passwd}"
 		chpasswd <<<"${user}:${rng_passwd}"
 	fi
@@ -97,7 +102,7 @@ for selection in "${selections[@]}"; do
 		unset uid
 		until
 			[[ ${uid} =~ ^[0-9]+$ ]] &&
-			! id -nu "${uid}" /etc/passwd &>/dev/null
+			! id -nu "${uid}" &>/dev/null
 		do
 			read -erp 'Enter the new UID: ' uid
 		done
