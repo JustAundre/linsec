@@ -46,15 +46,15 @@ for file in "${files[@]}"; do
 	fi
 done
 
-tmp="$(mktemp)"
-trap 'rm -rf "${tmp}"' EXIT
+tmp="$(mktemp -d)"
+trap 'rm -r -f "${tmp}"' EXIT
 for file in "${files[@]}"; do
-	grep -Pz '(?<!(?<!\n)\n{6})#\n# \w+\n#\n' "${file}"
-	flags="$(grep -Pzc '(?<!(?<!\n)\n{6})#\n# \w+\n#\n' "${file}")"
+	grep -P -z '(?<!(?<!\n)\n{6})#\n# \w+\n#\n' "${file}"
+	flags="$(grep -P -z -c '(?<!(?<!\n)\n{6})#\n# \w+\n#\n' "${file}")"
 	if [[ ${flags} -gt 0 ]] && (( FIX )); then
 		mkdir -p "$(dirname "${tmp}/${file}")"
 		cp -a "${file}" "${tmp}/${file}"
-		perl -0777 -pi -e 's/\n*#\n# (.+)\n#\n/\n\n\n\n\n\n#\n# $1\n#\n/g' "${file}"
+		perl -0777 -p -i -e 's/\n*#\n# (.+)\n#\n/\n\n\n\n\n\n#\n# $1\n#\n/g' "${file}"
 		diff -d "${tmp}/${file}" "${file}"
 		exit_status="${?}"
 		[[ "${exit_status}" -eq 1 ]] &&
@@ -66,7 +66,7 @@ for file in "${files[@]}"; do
 done
 
 for file in "${files[@]}"; do
-	if matches="$(grep -nE '[[:blank:]]+$' "${file}")"; then
+	if matches="$(grep -n -E '[[:blank:]]+$' "${file}")"; then
 		if ((FIX)); then
 			sed -i 's/[[:blank:]]\+$//' "${file}"
 			git add -- "${file}"
@@ -106,7 +106,7 @@ else
 	echo 'E: shellcheck not installed; skipped lint.' >&2
 fi
 
-if ((${#files[@]})); then
+if ((!${#files[@]})); then
 	echo 'i: No shellscripts to check.'
 elif ((findings > 0)); then
 	echo "W: ${#files[@]} file(s) checked, ${findings} advisory finding(s)." >&2
