@@ -2,8 +2,8 @@
 # Curly brackets to stop output of staging commands
 {
 	# Set secure/safe shell configurations
-	set +o xtrace verbose monitor nolog ignoreeof
-	set -o functrace errtrace pipefail noclobber
+	set +o xtrace +o verbose +o monitor +o nolog +o ignoreeof
+	set -o functrace -o errtrace -o pipefail -o noclobber
 	shopt -s histappend histverify cmdhist dotglob globstar interactive_comments
 	shopt -u cdable_vars cdspell dirspell extglob nocaseglob nocasematch expand_aliases progcomp
 	umask 077
