@@ -1,4 +1,4 @@
-Name: Notify on account lockout
+Name: Reset lockout on success
 Default: yes
 Priority: 1024
 Auth-Type: Primary
