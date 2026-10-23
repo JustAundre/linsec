@@ -10,15 +10,15 @@
 log i 'Conducting filesystem searches for various criterias...'
 log i 'This may take a while.'
 find / -xephem -perm -0002 '(' -type f -o -type d ')' -print0 > "${log_dir}/world-writables.txt" &
-find / -xephem -perm -4000 -print0 > "${log_dir}/suid-binaries.txt" &
-find / -xephem -perm -2000 -print0 > "${log_dir}/sgid-binaries.txt" &
+find / -xephem -type f -perm -4000 -print0 > "${log_dir}/suid-binaries.txt" &
+find / -xephem -type f -perm -2000 -print0 > "${log_dir}/sgid-binaries.txt" &
 find / -xephem -nouser -print0 > "${log_dir}/no-user.txt" &
 find / -xephem -nogroup -print0 > "${log_dir}/no-group.txt" &
 find / -xephem -xtype l -print0 > "${log_dir}/broken-symlinks.txt" &
-find / -xephem -name '*[^[:ascii:]]*' -print0 > "${log_dir}/non-ascii-paths.txt" &
-find / -xephem -name '*[^a-zA-Z0-9_.]*' -print0 > "${log_dir}/non-alphanumeric-leads.txt" &
+LC_ALL=C find / -xephem -name '*[! -~]*' -print0 > "${log_dir}/non-ascii-paths.txt" &
+find / -xephem -name '[^a-zA-Z0-9_.]*' -print0 > "${log_dir}/non-alphanumeric-leads.txt" &
 find /etc '(' -uid +"${id_bounds[SYS_UID_MAX]}" -o -gid +"${id_bounds[SYS_GID_MAX]}" ')' > "${log_dir}/etc-user-owned.txt" &
-find /home -mindepth 2 -maxdepth 2 -type f '(' -name .rhosts -o -name .shosts -o -name .netrc -o -name .forward -o -path '/home/*/ssh/rc' ')' > "${log_dir}/bad-user-configs.txt" &
+find /home -mindepth 2 -maxdepth 2 -type f '(' -name .rhosts -o -name .shosts -o -name .netrc -o -name .forward -o -path '/home/*/.ssh/rc' ')' > "${log_dir}/bad-user-configs.txt" &
 wait
 
 
@@ -96,8 +96,8 @@ find /etc/profile.d -type d -print0 | perm-fix -m 755 -o 0 -g 0
 #
 # Secure local home directories
 for entry in "${passwd[@]}"; do
-	IFS=':' read -rd $'\n' user hash uid gid gecos home shell <<<"${entry}"
-	[[ ${shell} =~ /('nologin'|'false')$ || ${home} == '/' ]] && continue
+	IFS=':' read -rd $'\n' user _ uid gid _ home shell <<<"${entry}"
+	[[ ${shell} =~ /('nologin'|'false')$ || ${home} =~ ^('/'|'/bin')$ ]] && continue
 	perm-fix -m 700 -o "${uid}" -g "${gid}" "${home}" "${home}/.ssh" "${home}/.gnupg"
 	perm-fix -m 600 -o "${uid}" -g "${gid}" "${home}/.ssh/authorized_keys" "${home}/.ssh/id_"*
 	log i "Comparing home contents with factory home directory for user: ${user@Q}"
