@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
-# Save parameters before execution
-before="$(sysctl -a)"
+
+
+
+
+#
+# Sysctl Parameters
 #
 # Iterate over each category
-mkdir -pv /etc/sysctl.d
 for category in ./cnf/sysctl/*; do
 	# Enumerate options for each category
 	choices=()
@@ -17,15 +20,7 @@ for category in ./cnf/sysctl/*; do
 	for selection in "${selections[@]}"; do
 		name="${selection##*/}"
 		name="${name// /-}"
-		install -m 600 -o 0 -g 0 -v "${selection}.conf" "/etc/sysctl.d/99-zz-${name@L}.conf"
+		install -m 600 -o 0 -g 0 -D -v "${selection}.conf" "/etc/sysctl.d/99-zz-${name@L}.conf"
 	done
 done
-#
-# Apply changes
 sysctl --system >/dev/null
-#
-# Save parameters post-execution
-after="$(sysctl -a)"
-#
-# Compare pre/post execution results
-diff -q <(printf '%s' "${before}") <(printf '%s' "${after}")
