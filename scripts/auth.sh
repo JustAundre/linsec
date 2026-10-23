@@ -23,7 +23,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 			args+=('without-nullok')
 			;;
 		*)
-			log e "Unknown selection ${response@Q}."
+			log e "unknown selection ${response@Q}."
 			;;
 		esac
 	done
@@ -35,25 +35,25 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 		case "${selection}" in
 		'Enforce password quality')
 			pkg-mgr install libpam-pwquality
-			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality /usr/share/pam-configs/pwquality
-			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /etc/security/pwquality.conf
+			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality /usr/share/pam-configs/pwquality
+			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /etc/security/pwquality.conf
 			;;
 		'Enforce minimum password length')
-			if ! grep -qE 'pam_unix\.so.+minlen=' /etc/pam.d/common-password; then
+			if grep -qE 'pam_unix\.so.+minlen=' /etc/pam.d/common-password; then
 				log w 'A minimum password length is already being enforced.'
 				confirm 'Continue anyway' || continue
 			fi
 			echo 'Enter a minimum password length:'
-			until [[ "${response}" =~ ^[0-9]$ ]]; do
+			until [[ ${response} =~ ^[0-9]+$ ]]; do
 				read -erp '> ' response
 			done
-			sed -i "/pam_unix\.so/s/\s+minlength=\d+\b/\tminlen=${response}/" /etc/pam.d/common-password
-			sed -i "/pam_unix\.so/s/$/\tminlen=${response}/" /etc/pam.d/common-password
+			sed -i "${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}[[:space:]]+minlength=[[:digit:]]+${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
+			sed -i "${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
 			;;
 		'Fail locking')
-			install -m 640 -o 0 -g 0 -Dv cnf/auth/faillock /usr/share/pam-configs/faillock
-			install -m 640 -o 0 -g 0 -Dv cnf/auth/faillock_reset /usr/share/pam-configs/faillock_reset
-			install -m 640 -o 0 -g 0 -Dv cnf/auth/faillock_notify /usr/share/pam-configs/faillock_notify
+			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock /usr/share/pam-configs/faillock
+			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock_reset /usr/share/pam-configs/faillock_reset
+			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock_notify /usr/share/pam-configs/faillock_notify
 			log i 'Enabled faillock.'
 			;;
 		'Reject passwordless logins')
@@ -61,17 +61,17 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 				log i 'Logins for passwordless users are already rejected.'
 				continue
 			fi
-			sed -i 's/\s*nullok//g' /usr/share/pam-configs/unix &&
+			sed -i "s${sed_delim}\s*nullok${sed_delim}${sed_delim}g" /usr/share/pam-configs/unix &&
 				log i 'Logins for passwordless users are now rejected.'
 			;;
 		*)
-			log e "Unknown selection ${response@Q}."
+			log e "unknown selection ${response@Q}."
 			;;
 		esac
 	done
 	#
 	# Update PAM configurations
-	pam-auth-update --force --package
+	((${#selections[@]})) && pam-auth-update --force --package
 	;;
 *freebsd*)
 	# TODO: TESTING NEEDED
@@ -90,7 +90,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	for path in "${paths[@]}"; do
 		# TODO: Automatically reinstall
 		pkg which -q -- "${path}"
-		if (($? == 1)); then
+		if ((${?} == 1)); then
 			log w "Unidentified PAM configuration override found: ${path@Q}"
 			printf '%s\0' "${path}" >> "${log_dir}/unidentified-pam-overrides.txt"
 		fi
@@ -101,7 +101,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /usr/local/etc/security/pwquality.conf
 	;;
 *)
-	log e 'Operating system not supported.'
+	log e "unsupported operating system"
 	exit 11
 	;;
 esac
@@ -110,27 +110,18 @@ esac
 
 
 
-
 #
-# Change Expiries (for future users)
+# Password Expiries
 #
 reconfig -x replace PASS_MAX_DAYS 31 /etc/login.defs
-reconfig -x replace PASS_MIN_DAYS 7 /etc/login.defs
+reconfig -x replace PASS_MIN_DAYS 1 /etc/login.defs
 reconfig -x replace PASS_WARN_AGE 27 /etc/login.defs
-
-
-
-
-
-#
-# Change Expiries (for existing users)
-#
 for entry in "${passwd[@]}"; do
-	IFS=':' read -rd $'\n' user hash uid gid gecos home shell <<<"${entry}"
-	[[ ${shell} =~ /('nologin'|'false')$ || ${user} == "${SUDO_USER}" ]] && continue
+	IFS=':' read -rd $'\n' user _ _ _ _ _ shell <<<"${entry}"
+	[[ ${shell} =~ /('nologin'|'false')$ || ${user} == "$(logname)" ]] && continue
 	timestamp="$(date +%Y-%m-%d)"
-	chage -m 7 -M 31 -W 27 "${user}" &&
-		log i "Set password min/max/warn timings to 3/31/27 (in days) for user: ${user@Q}."
+	chage -m 1 -M 31 -W 27 "${user}" &&
+		log i "Set password min/max/warn timings to 1/31/27 (in days) for user: ${user@Q}."
 	chage -d "${timestamp}" "${user}" &&
 		log i "Set date since last password change for user ${user@Q} to ${timestamp@Q}."
 done
