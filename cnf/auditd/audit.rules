@@ -1,10 +1,70 @@
-## Monitor all executions
--a always,exit -F arch=b64 -S execve -k execution_monitor
--a always,exit -F arch=b32 -S execve -k execution_monitor
+# Remove any existing rules, set buffer size and failure mode (guide-adjacent defaults)
+-D
+-b 8192
+-f 1
 
-## Monitor file modifications
--a always,exit -F arch=b64 -S rename,chmod,chown -k file_mods
--a always,exit -F arch=b32 -S rename,chmod,chown -k file_mods
+## Time changes (system clock, timezone)
+-a always,exit -F arch=b32 -S adjtimex,settimeofday,stime -F key=audit_time_rules
+-a always,exit -F arch=b64 -S adjtimex,settimeofday -F key=audit_time_rules
+-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -F key=time-change
+-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -F key=time-change
+-w /etc/localtime -p wa -k audit_time_rules
 
-## Lock the configuration
+## User/group account changes
+-w /etc/group -p wa -k audit_rules_usergroup_modification
+-w /etc/passwd -p wa -k audit_rules_usergroup_modification
+-w /etc/gshadow -p wa -k audit_rules_usergroup_modification
+-w /etc/shadow -p wa -k audit_rules_usergroup_modification
+-w /etc/security/opasswd -p wa -k audit_rules_usergroup_modification
+
+## Network environment changes
+-a always,exit -F arch=b32 -S sethostname,setdomainname -F key=audit_rules_networkconfig_modification
+-a always,exit -F arch=b64 -S sethostname,setdomainname -F key=audit_rules_networkconfig_modification
+-w /etc/issue -p wa -k audit_rules_networkconfig_modification
+-w /etc/issue.net -p wa -k audit_rules_networkconfig_modification
+-w /etc/hosts -p wa -k audit_rules_networkconfig_modification
+-w /etc/sysconfig/network -p wa -k audit_rules_networkconfig_modification
+
+## SELinux / MAC policy changes
+-w /etc/selinux/ -p wa -k MAC-policy
+
+## Discretionary access control (permission/ownership/xattr changes)
+-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat -F auid>=1000 -F auid!=4294967295 -F key=perm_mod
+-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat -F auid>=1000 -F auid!=4294967295 -F key=perm_mod
+-a always,exit -F arch=b32 -S chown,fchown,fchownat,lchown -F auid>=1000 -F auid!=4294967295 -F key=perm_mod
+-a always,exit -F arch=b64 -S chown,fchown,fchownat,lchown -F auid>=1000 -F auid!=4294967295 -F key=perm_mod
+-a always,exit -F arch=b32 -S setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F auid>=1000 -F auid!=4294967295 -F key=perm_mod
+-a always,exit -F arch=b64 -S setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F auid>=1000 -F auid!=4294967295 -F key=perm_mod
+
+## Unsuccessful file access attempts
+-a always,exit -F arch=b32 -S creat,open,openat,open_by_handle_at,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access
+-a always,exit -F arch=b64 -S creat,open,openat,open_by_handle_at,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -F key=access
+-a always,exit -F arch=b32 -S creat,open,openat,open_by_handle_at,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access
+-a always,exit -F arch=b64 -S creat,open,openat,open_by_handle_at,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -F key=access
+
+## Login/logout and session records
+-w /var/log/lastlog -p wa -k logins
+-w /var/log/tallylog -p wa -k logins
+-w /var/run/faillock -p wa -k logins
+-w /var/run/utmp -p wa -k session
+-w /var/log/wtmp -p wa -k session
+-w /var/log/btmp -p wa -k session
+
+## Media exportation (mount)
+-a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=4294967295 -F key=export
+-a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=4294967295 -F key=export
+
+## File deletion/renaming by users
+-a always,exit -F arch=b32 -S rmdir,unlink,unlinkat,rename,renameat -F auid>=1000 -F auid!=4294967295 -F key=delete
+-a always,exit -F arch=b64 -S rmdir,unlink,unlinkat,rename,renameat -F auid>=1000 -F auid!=4294967295 -F key=delete
+
+## Sudoers / admin actions
+-w /etc/sudoers -p wa -k actions
+-w /etc/sudoers.d/ -p wa -k actions
+
+## Kernel module loading/unloading
+-a always,exit -F arch=b32 -S init_module,finit_module,delete_module -F key=modules
+-a always,exit -F arch=b64 -S init_module,finit_module,delete_module -F key=modules
+
+## Make configuration immutable (requires reboot to change rules) - keep LAST
 -e 2
