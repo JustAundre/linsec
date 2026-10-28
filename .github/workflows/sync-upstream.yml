@@ -15,7 +15,7 @@ jobs:
       - run: |
           git config user.name "sync-bot"
           git config user.email "sync-bot@users.noreply.github.com"
-          curl https://raw.githubusercontent.com/trumb/nginx-hardening/refs/heads/main/security-hardening.conf > cnf/security-hardening.conf || exit 1
+          curl https://raw.githubusercontent.com/trumb/nginx-hardening/refs/heads/main/security-hardening.conf > cnf/nginx/security-hardening.conf || exit 1
           git add cnf/security-hardening.conf
           git diff --cached --quiet || git commit -m "update(cnf/security-hardening.conf): pull upstream changes."
           git push
