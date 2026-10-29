@@ -12,10 +12,12 @@ mapfile -t shells < <(grep -E '^/' /etc/shells)
 #
 # Compile vanity tags for display in checklists
 # Create reverse-lookup associative array for matching backwards-matching from vanity to IDs
+confirm 'Exclude system users from audit'
+exclude_sys_users="${?}"
 declare -A reverse_lookup
 for entry in "${passwd[@]}"; do
 	IFS=':' read -rd $'\n' user _ uid gid _ _ shell <<<"${entry}"
-	confirm 'Exclude system users from audit' && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
+	((exclude_sys_users)) && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
 	user_vanities+=("$(id -- "${user}") sh=${shell@Q}")
 	reverse_lookup["${user_vanities["$((${#user_vanities[@]} - 1))"]}"]="${user}"
 done
