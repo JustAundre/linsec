@@ -47,8 +47,8 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 			until [[ ${response} =~ ^[0-9]+$ ]]; do
 				read -erp '> ' response
 			done
-			sed -i "${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}[[:space:]]+minlength=[[:digit:]]+${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
-			sed -i "${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
+			sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}[[:space:]]+minlen=[[:digit:]]+${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
+			sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
 			;;
 		'Fail locking')
 			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock /usr/share/pam-configs/faillock
