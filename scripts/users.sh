@@ -84,10 +84,9 @@ for selection in "${selections[@]}"; do
 		passwd "${user}"
 	fi
 	if ((index['Set random password'])); then
-		rng_passwd="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 4)"
-		rng_passwd+="$(mktemp XXXXXXXX --dry-run)"
-		rng_passwd+="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 4)"
-		echo "${user}:${rng_passwd}"
+		symbols="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 8)"
+		alphanumerics+="$(mktemp XXXXXXXX --dry-run)"
+		echo "${user}:${symbols:0:4}${alphanumerics}${symbols:4:4}"
 		chpasswd <<<"${user}:${rng_passwd}"
 	fi
 	if ((index['Expire password'])); then
