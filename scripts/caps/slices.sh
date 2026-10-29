@@ -19,7 +19,7 @@ do
 		log i "After you resume, you'll be made to revise your configurations again."
 		pause 0
 	fi
-	"${EDITOR}" cnf/rsc-caps/slice-individual.slice cnf/rsc-caps/slice-shared.slice cnf/rsc-caps/limits.conf
+	"${EDITOR}" -- cnf/rsc-caps/slice-individual.slice cnf/rsc-caps/slice-shared.slice cnf/rsc-caps/limits.conf
 done)
 
 
