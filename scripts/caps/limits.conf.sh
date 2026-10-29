@@ -32,9 +32,10 @@ valid_items=(
 #
 # Function to check if an item is in an array
 contains_element() {
-	local match="$1"
 	shift
-	for e; do [[ "$e" == "$match" ]] && return 0; done
+	for arg in "${@:1}"; do
+		[[ ${arg} == "${1}" ]] && return 0
+	done
 	return 1
 }
 
@@ -72,7 +73,7 @@ until ((pass)); do
 	done < <(grep -Ev '^\s*(#|$)' cnf/rsc-caps/limits.conf)
 	if ((!pass)); then
 		log w 'There was a syntax error in your limits.conf.'
-		read -erp "Press [ENTER] to re-edit, or wait 10 seconds to exit." -t 10 || exit 10
+		read -erp 'Press [ENTER] to re-edit, or wait 10 seconds to exit.' -t 10 || exit 10
 	fi
 done
 
