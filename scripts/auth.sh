@@ -92,7 +92,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 		pkg which -q -- "${path}"
 		if ((${?} == 1)); then
 			log w "Unidentified PAM configuration override found: ${path@Q}"
-			printf '%s\0' "${path}" >> "${log_dir}/unidentified-pam-overrides.txt"
+			printf '%s\0' "${path}" >>"${log_dir}/unidentified-pam-overrides.txt"
 		fi
 	done
 	#
@@ -101,7 +101,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /usr/local/etc/security/pwquality.conf
 	;;
 *)
-	log e "unsupported operating system"
+	log e 'unsupported operating system'
 	exit 11
 	;;
 esac

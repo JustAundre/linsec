@@ -26,7 +26,7 @@ wait
 
 
 #
-# Login.defs
+# Global Environment Configurations
 #
 reconfig -x replace UMASK 027 /etc/profile
 reconfig -x replace UMASK 027 /etc/login.defs
@@ -64,8 +64,10 @@ else
 fi
 #
 # Sudoers configuration
-find /etc/sudoers.d /etc/sudoers -type f -print0 | perm-fix -m 640 -o 0 -g 0
-find /etc/sudoers.d -type d -print0 | perm-fix -m 750 -o 0 -g 0
+if hash sudo &>/dev/null; then
+	find /etc/sudoers.d /etc/sudoers -type f -print0 | perm-fix -m 640 -o 0 -g 0
+	find /etc/sudoers.d -type d -print0 | perm-fix -m 750 -o 0 -g 0
+fi
 
 
 
@@ -83,26 +85,29 @@ find /etc/audit /etc/rsyslog.d /etc/rsyslog.conf -mindepth 1 -type f -print0 | p
 find /etc/audit /etc/rsyslog.d -type d -print0 | perm-fix -m 750 -o 0 -g 0
 #
 # SSH configurations, private keys, and public keys.
-find /etc/ssh -type f -print0 | perm-fix -m 600 -o 0 -g 0
-find /etc/ssh -type d -print0 | perm-fix -m 750 -o 0 -g 0
-find /etc/ssh -name '*.pub' -type f -print0 | perm-fix -m 644 -o 0 -g 0
+if hash sshd &>/dev/null; then
+	find /etc/ssh -type f -print0 | perm-fix -m 600 -o 0 -g 0
+	find /etc/ssh -type d -print0 | perm-fix -m 750 -o 0 -g 0
+	find /etc/ssh -name '*.pub' -type f -print0 | perm-fix -m 644 -o 0 -g 0
+else
+	log i 'SSHD not detected; skipping SSHD file permission fixes...'
+fi
 #
 # Secure MOTD/banners are secured
 perm-fix -m 644 -o 0 -g 0 /etc/issue /etc/issue.net /etc/motd
 #
 # Secure global shell profiles
-find /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d -type f -print0 | perm-fix -m 644 -o 0 -g 0
+find /etc/profile /etc/profile.d /etc/bashrc /etc/bash.bashrc -type f -print0 | perm-fix -m 644 -o 0 -g 0
 find /etc/profile.d -type d -print0 | perm-fix -m 755 -o 0 -g 0
 #
 # Secure local home directories
+mkdir -p "${log_dir}/home-diffs"
 for entry in "${passwd[@]}"; do
 	IFS=':' read -rd $'\n' user _ uid gid _ home shell <<<"${entry}"
 	[[ ${shell} =~ /('nologin'|'false')$ || ${home} =~ ^('/'|'/bin')$ ]] && continue
 	perm-fix -m 700 -o "${uid}" -g "${gid}" "${home}" "${home}/.ssh" "${home}/.gnupg"
 	perm-fix -m 600 -o "${uid}" -g "${gid}" "${home}/.ssh/authorized_keys" "${home}/.ssh/id_"*
-	log i "Comparing home contents with factory home directory for user: ${user@Q}"
-	pause 0
-	diff -r /etc/skel "${home}" --color=force --unified | less -R
+	diff -r /etc/skel "${home}" --unified >"${log_dir}/home-diffs/${user}-${uid}"
 done
 #
 # APT keyrings
@@ -119,13 +124,16 @@ perm-fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 # Services
 #
 # SystemD units
-find /etc/systemd/system -type f -print0 | perm-fix -m 640 -o 0 -g 0
-find /etc/systemd/system -type d -print0 | perm-fix -m 750 -o 0 -g 0
+if [[ ${init} == 'systemd' ]]; then
+	find /etc/systemd/system -type f -print0 | perm-fix -m 640 -o 0 -g 0
+	find /etc/systemd/system -type d -print0 | perm-fix -m 750 -o 0 -g 0
+else
+	log i 'Initialization system is not SystemD; not checking SystemD unit file permissions.'
+fi
 #
 # Scheduled tasks
 find /etc/crontab /etc/cron.d /etc/cron.allow /etc/cron.deny /etc/anacrontab -type f -print0 | perm-fix -m 640 -o 0 -g 0
-find /etc/cron.{hourly,daily,weekly,monthly} -type f -print0 | perm-fix -m 750 -o 0 -g 0
-find /etc/cron.* -type d -print0 | perm-fix -m 750 -o 0 -g 0
+find /etc/cron.{hourly,daily,weekly,monthly} -print0 | perm-fix -m 750 -o 0 -g 0
 
 
 
@@ -150,5 +158,25 @@ if [[ -n ${auditd_log_file} && -d ${auditd_log_dir} ]]; then
 fi
 #
 # Disable core dumping
-reconfig -x 'replace' -d '=' Storage none /etc/systemd/coredump.conf
-reconfig -x 'replace' -d '=' ProcessSizeMax 0 /etc/systemd/coredump.conf
+if [[ ${init} == 'systemd' ]]; then
+	reconfig -x 'replace' -d '=' Storage none /etc/systemd/coredump.conf
+	reconfig -x 'replace' -d '=' ProcessSizeMax 0 /etc/systemd/coredump.conf
+else
+	log i 'Initialization system is not SystemD; not configuring SystemD to disable coredumps.'
+fi
+
+
+
+
+
+#
+# Binary Capabilities
+#
+while read -r -d '' path; do
+	output="$(getcap "${path}" 2>/dev/null)"
+	[[ -n ${path} ]] || continue
+	caps="${output##* = }"
+	printf '%s\0%s\0' "${path}" "${caps}" >"${log_dir}/binary-capabilities.txt"
+done < <(
+	find / -xephem -type f '(' -perm -001 -o -not -uid 0 -o -not -gid 0 ')'
+)
