@@ -8,6 +8,7 @@
 # Environment Setup
 #
 # CD into the script's parent directory.
+umask 027
 BASE_DIR="$(dirname -- "$(realpath -- "${0}")")"
 cd "${BASE_DIR}" || exit 1
 [[ -d './bash-lib' ]] || exit 2
@@ -26,7 +27,7 @@ until hash "${EDITOR}"; do
 done
 #
 # Performance optimizations, not strictly necessary but great to have enabled.
-for builtin in basename dirname cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
+for builtin in cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
 	[[ -f /usr/lib/bash/${builtin} ]] && enable -f "/usr/lib/bash/${builtin}" "${builtin}"
 done
 unset builtin
@@ -79,7 +80,7 @@ log i 'Running environment checks...'
 #
 # 1. Is this running in Bash & NOT sourced?
 # 2. Does this script have root permissions?
-# 3. Is the active init. system SystemD?
+# 3. Is the active initialization system SystemD?
 # 4. Is the output a terminal?
 [[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('script cannot be sourced and requires Bash interpreter.')
 [[ ${EUID} -eq 0 ]] || errors+=("UID 0 required—try: sudo ${0}.")
@@ -109,7 +110,7 @@ fi
 log w 'If the following command output reveals any DLLs not owned by the system, exit this script immediately and remedy the issue.'
 mapfile -t ldds < <(
 	which ps ss ls netstat find passwd whoami 2>/dev/null |
-		unshare -n runuser -u nobody -- xargs -r -d '\n' ldd |
+		unshare -n runuser -u nobody -- xargs -n 1 -r -d '\n' ldd |
 		awk '$2 == "=>" && $3 ~ /^\// { print $3 } $1 ~ /^\// { print $1 }' |
 		xargs -r -d '\n' realpath -e |
 		sort -u
