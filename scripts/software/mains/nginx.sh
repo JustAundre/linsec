@@ -60,7 +60,7 @@ directives=(
 	"listen"
 )
 for directive in "${directives[@]}"; do
-	sed -Ei "\|^[[:space:]]*${directive}[[:space:]]|d" "${nginx[config]}"
+	sed -Ei "\\${sed_delim}^[[:space:]]*${directive}[[:space:]]${sed_delim}d" "${nginx[config]}"
 done
 #
 # Create TLS snippet
