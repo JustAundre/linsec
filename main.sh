@@ -129,22 +129,20 @@ pause 0
 #
 # Script Selection
 #
-mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
-mapfile -td '' selections < <(PS2='Choose a script to run' cl-new -m "${scripts[@]}")
+mapfile -t -d '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
+mapfile -t -d '' selections < <(PS2='Choose a script to run' cl-new -m "${scripts[@]}")
 for script in "${selections[@]}"; do
-	log i "Incoming script: ${script@Q}"
+	log i "incoming script: ${script@Q}"
 	pause 0
 	(
 		trap 'exit 130' SIGINT
-		#
-		# Execute the script.
 		source "${script}"
 	)
 	if ((${?} == 130)); then
 		log i 'Sending SIGINT (CTRL + C) during script execution sends you back to the main menu.'
 		log i 'Send SIGINT again to terminate the script.'
-		pause
-		exec "'${ABSOLUTE_SELF}"
+		pause 0
+		exec "${ABSOLUTE_SELF}"
 	fi
 done
 
