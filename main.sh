@@ -24,7 +24,7 @@ hash "${EDITOR}" &>/dev/null || for EDITOR in nano micro mcedit tilde joe e3 hx 
 done
 until hash "${EDITOR}"; do
 	log w 'The EDITOR variable is invalid or undeclared.'
-	read -erp 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
+	read -e -r -p 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
 done
 #
 # Performance optimizations, not strictly necessary but great to have enabled.
