@@ -9,6 +9,7 @@
 #
 # CD into the script's parent directory.
 umask 027
+ABSOLUTE_SELF="$(realpath -- "${0}")"
 BASE_DIR="$(dirname -- "$(realpath -- "${0}")")"
 cd "${BASE_DIR}" || exit 1
 [[ -d './bash-lib' ]] || exit 2
@@ -27,8 +28,11 @@ until hash "${EDITOR}"; do
 done
 #
 # Performance optimizations, not strictly necessary but great to have enabled.
-for builtin in cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
-	[[ -f /usr/lib/bash/${builtin} ]] && enable -f "/usr/lib/bash/${builtin}" "${builtin}"
+for cmd in cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
+	path="/usr/lib/bash/${cmd}"
+	[[ -f ${path} ]] || continue
+	enable -f "${path}" "${cmd}" &&
+		log i "loaded dynamically loadable bash builtin from ${path@Q}"
 done
 unset builtin
 
@@ -62,7 +66,7 @@ while IFS='=' read -r key value; do
 	value="${value%\"}"
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
-done < /etc/os-release
+done </etc/os-release
 for pkg_backend in apt-get dnf yum pacman pkg; do
 	hash "${pkg_backend}" &>/dev/null && break
 	unset pkg_backend
@@ -83,7 +87,7 @@ log i 'Running environment checks...'
 # 3. Is the active initialization system SystemD?
 # 4. Is the output a terminal?
 [[ ${BASH_SOURCE[0]} == "${0}" ]] || errors+=('script cannot be sourced and requires Bash interpreter.')
-[[ ${EUID} -eq 0 ]] || errors+=("UID 0 required—try: sudo ${0}.")
+[[ ${EUID} -eq 0 ]] || errors+=("UID 0 required—try: sudo '${ABSOLUTE_SELF}.")
 [[ ${init} =~ ^(systemd|init)$ ]] || errors+=('your system must be using SystemD or init).')
 [[ -t 0 ]] || errors+=('interactive terminal required.')
 ((${#pkg_backend})) || errors+=('unable to find supported package manager in PATH variable.')
@@ -141,7 +145,7 @@ for script in "${selections[@]}"; do
 		log i 'Sending SIGINT (CTRL + C) during script execution sends you back to the main menu.'
 		log i 'Send SIGINT again to terminate the script.'
 		pause
-		exec "${0}"
+		exec "'${ABSOLUTE_SELF}"
 	fi
 done
 
