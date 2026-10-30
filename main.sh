@@ -56,7 +56,7 @@ umask 077
 set -o pipefail
 shopt -s nullglob
 declare -A id_bounds
-while IFS=' ' read -rd $'\n' key value; do
+while IFS=' ' read -r -d $'\n' key value; do
 	id_bounds["${key}"]="${value}"
 done < <(awk '/^#?[[:space:]]*(SYS_)?(U|G)ID_(MIN|MAX)/ {print $1, $2}' /etc/login.defs)
 mapfile -t passwd < /etc/passwd
