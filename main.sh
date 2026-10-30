@@ -153,13 +153,15 @@ done
 #
 # Exit
 #
+repo_version="git not installed"
+hash git &>/dev/null && repo_version="$(git log | head -n 1)"
 cat <<-EOF
 	  ---{=========}###[@]###{===========}---
 	        Windows at loss at the
 	           agape freedom of Linux
 	  ---{=========}###[@]###{===========}---
 
-	Suite version:         $(git log | head -n1)
+	Repository version:    ${version}
 	Operating system:      $(uname -r)
 	Startup checks failed: ${#errors[@]}
 	Log directory:         ${log_dir@Q}
