@@ -16,7 +16,7 @@ for category in ./cnf/sysctl/*; do
 	done
 	#
 	# Query for which options to enforce and enforce selected options
-	mapfile -td '' selections < <(PS2="Select ${category} hardening sysctl parameters" cl-new -mo "${choices[@]}")
+	mapfile -t -d '' selections < <(PS2="Select ${category} hardening sysctl parameters" cl-new -m -o "${choices[@]}")
 	for selection in "${selections[@]}"; do
 		name="${selection##*/}"
 		name="${name// /-}"

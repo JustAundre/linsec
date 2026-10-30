@@ -20,7 +20,7 @@ is_bash_file() {
 	case "${1}" in
 		*.sh|*.bash|*.rc) return 0 ;;
 	esac
-	head -n1 "${1}" 2>/dev/null | grep -qE '^#!.*\bbash\b'
+	head -n 1 "${1}" 2>/dev/null | grep -q -E '^#!.*\bbash\b'
 }
 
 files=()

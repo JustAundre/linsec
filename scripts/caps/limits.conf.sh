@@ -70,10 +70,10 @@ until ((pass)); do
 			pass=0
 			break
 		fi
-	done < <(grep -Ev '^\s*(#|$)' cnf/rsc-caps/limits.conf)
+	done < <(grep -E -v '^\s*(#|$)' cnf/rsc-caps/limits.conf)
 	if ((!pass)); then
 		log w 'There was a syntax error in your limits.conf.'
-		read -erp 'Press [ENTER] to re-edit, or wait 10 seconds to exit.' -t 10 || exit 10
+		read -e -r -p 'Press [ENTER] to re-edit, or wait 10 seconds to exit.' -t 10 || exit 10
 	fi
 done
 
@@ -84,4 +84,4 @@ done
 #
 # Install
 #
-install -m 644 -o 0 -g 0 -Dv cnf/rsc-caps/limits.conf /etc/security/limits.conf
+install -m 644 -o 0 -g 0 -D -v cnf/rsc-caps/limits.conf /etc/security/limits.conf

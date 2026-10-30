@@ -16,13 +16,13 @@ confirm 'Exclude system users from audit'
 exclude_sys_users="${?}"
 declare -A reverse_lookup
 for entry in "${passwd[@]}"; do
-	IFS=':' read -rd $'\n' user _ uid gid _ _ shell <<<"${entry}"
+	IFS=':' read -r -d $'\n' user _ uid gid _ _ shell <<<"${entry}"
 	((exclude_sys_users)) && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
 	user_vanities+=("$(id -- "${user}") sh=${shell@Q}")
 	reverse_lookup["${user_vanities["$((${#user_vanities[@]} - 1))"]}"]="${user}"
 done
 for entry in "${group[@]}"; do
-	IFS=':' read -rd $'\n' group _ gid _ <<<"${entry}"
+	IFS=':' read -r -d $'\n' group _ gid _ <<<"${entry}"
 	group_vanities+=("gid=${gid}(${group})")
 	reverse_lookup["${group_vanities["$((${#group_vanities[@]} - 1))"]}"]="${group}"
 done
@@ -34,7 +34,7 @@ done
 #
 # Prompting
 #
-mapfile -td '' selections < <(PS2='Select users to modify' cl-new -mo "${user_vanities[@]}")
+mapfile -t -d '' selections < <(PS2='Select users to modify' cl-new -m -o "${user_vanities[@]}")
 for selection in "${selections[@]}"; do
 	declare -A index=()
 	choices=(
@@ -52,7 +52,7 @@ for selection in "${selections[@]}"; do
 	for choice in "${!choices[@]}"; do
 		declare index["${choice}"]=0
 	done
-	mapfile -td '' selections_2 < <(PS2='Modifying user: '"${selection}" cl-new -mo "${choices[@]}")
+	mapfile -t -d '' selections_2 < <(PS2='Modifying user: '"${selection}" cl-new -m -o "${choices[@]}")
 	for selection_2 in "${selections_2[@]}"; do
 		index["${selection_2}"]=1
 	done
@@ -72,7 +72,7 @@ for selection in "${selections[@]}"; do
 	user="${reverse_lookup["${selection}"]}"
 	if ((index['Delete user'])); then
 		[[ ${user} == "$(logname)" || ${user} == 'root' ]] && confirm "Are you really sure you want to delete ${user@Q}?"
-		userdel -rf "${user}"
+		userdel -r -f "${user}"
 	fi
 	if ((index['Lock user'])); then
 		[[ ${user} == "$(logname)" || ${user} == 'root' ]] &&
@@ -103,9 +103,9 @@ for selection in "${selections[@]}"; do
 		unset uid
 		until
 			[[ ${uid} =~ ^[0-9]+$ ]] &&
-			! id -nu "${uid}" &>/dev/null
+			! id -n -u "${uid}" &>/dev/null
 		do
-			read -erp 'Enter the new UID: ' uid
+			read -e -r -p 'Enter the new UID: ' uid
 		done
 		usermod -u "${uid}" "${user}"
 	fi
@@ -116,7 +116,7 @@ for selection in "${selections[@]}"; do
 	fi
 	if ((index['Change supplementary groups'])); then
 		unset supplementary_groups selections_3
-		mapfile -td '' selections_3 < <(PS2="Select new supplementary groups for ${user@Q}" cl-new -mo "${group_vanities[@]}")
+		mapfile -t -d '' selections_3 < <(PS2="Select new supplementary groups for ${user@Q}" cl-new -m -o "${group_vanities[@]}")
 		for selection_3 in "${selections_3[@]}"; do
 			supplementary_groups+=("${reverse_lookup["${selection_3}"]}")
 		done

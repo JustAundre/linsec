@@ -8,7 +8,7 @@
 # Active Module Audit
 #
 # Fetch loaded kernel modules'...
-mapfile -t mods < <(grep -Eo '^[^ ]+' /proc/modules | sort)
+mapfile -t mods < <(grep -E -o '^[^ ]+' /proc/modules | sort)
 for mod in "${mods[@]}"; do
 	# Descriptions
 	desc="$(modinfo -d "${mod}" | tr -d '\n')"
@@ -23,9 +23,9 @@ for mod in "${mods[@]}"; do
 done
 #
 # Unload & disable selected modules.
-while IFS=':' read -rd '' mod desc; do
+while IFS=':' read -r -d '' mod desc; do
 	selections+=("${mod}")
-done < <(PS2='Select active modules to stop and disable.' cl-new -mo "${readable[@]}")
+done < <(PS2='Select active modules to stop and disable.' cl-new -m -o "${readable[@]}")
 ((!${#selections[@]})) && exit 0
 modprobe -r "${selections[@]}"
 printf 'install %s /bin/false\n' "${selections[@]}" >>/etc/modprobe.d/hardening.conf
