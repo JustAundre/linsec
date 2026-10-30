@@ -17,8 +17,8 @@ fi
 mapfile -t mods  < <(sort < <(
 	find "/lib/modules/$(uname -r)" -type f -name '*.ko*' -printf '%f\n' |
 		sed 's/_/-/g' |
-		cut -d '.' -f1
-	grep -ZoE '^\w+' /proc/modules |
+		cut -d . -f 1
+	grep -o -E '^\w+' /proc/modules |
 		sed 's/_/-/g'
 ) | uniq -u)
 confirm 'Prevent currently unused kernel modules from ever being loaded' &&
