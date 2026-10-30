@@ -7,14 +7,14 @@
 #
 # PAM Configuration
 #
-mapfile -td '' selections < <(PS2='Select patches to apply.' cl-new -mo 'Enforce password quality' 'Enforce minimum password length' 'Fail locking' 'Reject passwordless logins')
+mapfile -t -d '' selections < <(PS2='Select patches to apply.' cl-new -m -o 'Enforce password quality' 'Enforce minimum password length' 'Fail locking' 'Reject passwordless logins')
 case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 *fedora*)
 	for selection in "${selections[@]}"; do
 		case "${selection}" in
 		'Enforce password quality')
 			args+=('with-pwquality')
-			install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /etc/security/pwquality.conf
+			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /etc/security/pwquality.conf
 			;;
 		'Fail locking')
 			args+=('with-faillock')
@@ -34,18 +34,24 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	for selection in "${selections[@]}"; do
 		case "${selection}" in
 		'Enforce password quality')
-			pkg-mgr install libpam-pwquality
+			case "${pkg_backend}" in
+			'apt-get') "${pkg_backend}" install --reinstall libpam-pwquality -y -o Dpkg::Options::='--force-confmiss' ;;
+			'dnf') "${pkg_backend}" reinstall libpam-pwquality -y ;;
+			'yum') "${pkg_backend}" reinstall libpam-pwquality -y ;;
+			'pacman') "${pkg_backend}" -S libpam-pwquality --noconfirm ;;
+			'pkg') "${pkg_backend}" install -f libpam-pwquality ;;
+			esac
 			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality /usr/share/pam-configs/pwquality
 			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /etc/security/pwquality.conf
 			;;
 		'Enforce minimum password length')
-			if grep -qE 'pam_unix\.so.+minlen=' /etc/pam.d/common-password; then
+			if grep -q -E 'pam_unix\.so.+minlen=' /etc/pam.d/common-password; then
 				log w 'A minimum password length is already being enforced.'
 				confirm 'Continue anyway' || continue
 			fi
 			echo 'Enter a minimum password length:'
 			until [[ ${response} =~ ^[0-9]+$ ]]; do
-				read -erp '> ' response
+				read -e -r -p '> ' response
 			done
 			sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}[[:space:]]+minlen=[[:digit:]]+${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
 			sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
@@ -77,16 +83,16 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	# TODO: TESTING NEEDED
 	# Download base image for FreeBSD system
 	trap '[[ -f base.txz ]] && rm -v base.txz' EXIT
-	base_sys_url="https://download.freebsd.org/releases/$(uname -m)/$(freebsd-version | cut -d'-' -f1,2)/base.txz"
+	base_sys_url="https://download.freebsd.org/releases/$(uname -m)/$(freebsd-version | cut -d '-' -f 1,2)/base.txz"
 	log i "Fetching base system image from ${base_sys_url@Q}..."
-	fetch -o 'base.txz' -asr "${base_sys_url}" 2>&1 1>&2 | log e || exit 12
+	fetch -o 'base.txz' -a -s -r "${base_sys_url}" 2>&1 1>&2 | log e || exit 12
 	#
 	# Backup existing /etc/pam.d directory and extract base.
 	mv /etc/pam.d{,'.bak'}
-	tar -xf base.txz -C /etc/pam.d/ etc/pam.d
+	tar -x -f base.txz -C /etc/pam.d/ etc/pam.d
 	#
 	# Audit PAM configuration overrides
-	mapfile -td '' paths < <(find /usr/local/etc/pam.d/ -type f -print0)
+	mapfile -t -d '' paths < <(find /usr/local/etc/pam.d/ -type f -print0)
 	for path in "${paths[@]}"; do
 		# TODO: Automatically reinstall
 		pkg which -q -- "${path}"
@@ -98,7 +104,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	#
 	# Enable password quality checks
 	pkg install -f pam_pwquality
-	install -m 640 -o 0 -g 0 -Dv cnf/auth/pwquality.conf /usr/local/etc/security/pwquality.conf
+	install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /usr/local/etc/security/pwquality.conf
 	;;
 *)
 	log e 'unsupported operating system'
@@ -113,15 +119,18 @@ esac
 #
 # Password Expiries
 #
-reconfig -x replace PASS_MAX_DAYS 31 /etc/login.defs
-reconfig -x replace PASS_MIN_DAYS 1 /etc/login.defs
-reconfig -x replace PASS_WARN_AGE 27 /etc/login.defs
+PASS_MAX_DAYS=31
+PASS_MIN_DAYS=1
+PASS_WARN_AGE=27
+reconfig -x replace PASS_MIN_DAYS "${PASS_MIN_DAYS}" /etc/login.defs
+reconfig -x replace PASS_MAX_DAYS "${PASS_MAX_DAYS}" /etc/login.defs
+reconfig -x replace PASS_WARN_AGE "${PASS_WARN_AGE}" /etc/login.defs
 for entry in "${passwd[@]}"; do
-	IFS=':' read -rd $'\n' user _ _ _ _ _ shell <<<"${entry}"
+	IFS=':' read -r -d $'\n' user _ _ _ _ _ shell <<<"${entry}"
 	[[ ${shell} =~ /('nologin'|'false')$ || ${user} == "$(logname)" ]] && continue
 	timestamp="$(date +%Y-%m-%d)"
-	chage -m 1 -M 31 -W 27 "${user}" &&
-		log i "Set password min/max/warn timings to 1/31/27 (in days) for user: ${user@Q}."
+	chage -m "${PASS_MIN_DAYS}" -M "${PASS_MAX_DAYS}" -W "${PASS_WARN_AGE}" "${user}" &&
+		log i "${user@Q}'s password min/max/warn timings set to ${PASS_MIN_DAYS}/${PASS_MAX_DAYS}/${PASS_WARN_AGE} (in days)."
 	chage -d "${timestamp}" "${user}" &&
-		log i "Set date since last password change for user ${user@Q} to ${timestamp@Q}."
+		log i "${user@Q}'s last password change date set to ${timestamp@Q}."
 done
