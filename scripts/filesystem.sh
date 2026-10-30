@@ -40,11 +40,11 @@ reconfig -x replace CREATE_HOME yes /etc/login.defs
 #
 # SUID/SGID Binaries
 #
-mapfile -td '' paths < "${log_dir}/suid-binaries.txt"
-mapfile -td '' selections < <(PS2='Select paths to remove the SUID bit from' cl-new -mo "${paths[@]}")
+mapfile -t -d '' paths < "${log_dir}/suid-binaries.txt"
+mapfile -t -d '' selections < <(PS2='Select paths to remove the SUID bit from' cl-new -m -o "${paths[@]}")
 ((${#selections[@]})) && chmod u-s -v -- "${selections[@]}"
-mapfile -td '' paths < "${log_dir}/sgid-binaries.txt"
-mapfile -td '' selections < <(PS2='Select paths to remove the SGID bit from' cl-new -mo "${paths[@]}")
+mapfile -t -d '' paths < "${log_dir}/sgid-binaries.txt"
+mapfile -t -d '' selections < <(PS2='Select paths to remove the SGID bit from' cl-new -m -o "${paths[@]}")
 ((${#selections[@]})) && chmod g-s -v -- "${selections[@]}"
 
 
@@ -55,18 +55,18 @@ mapfile -td '' selections < <(PS2='Select paths to remove the SGID bit from' cl-
 # Identity & Authorization
 #
 # /etc/passwd, /etc/group and the shadow files (plus their backups)
-perm-fix -m 644 -o 0 -g 0 /etc/passwd /etc/group
-if grep -qE '^shadow:' /etc/group; then
-	perm-fix -m 640 -o 0 -g shadow /etc/shadow /etc/gshadow
-	perm-fix -m 640 -o 0 -g 0 /etc/shadow- /etc/gshadow-
+perm-fix -s -m 644 -o 0 -g 0 /etc/passwd /etc/group
+if grep -q -E '^shadow:' /etc/group; then
+	perm-fix -s -m 640 -o 0 -g shadow /etc/shadow /etc/gshadow
+	perm-fix -s -m 640 -o 0 -g 0 /etc/shadow- /etc/gshadow-
 else
-	perm-fix -m 600 -o 0 -g 0 /etc/shadow /etc/gshadow /etc/shadow- /etc/gshadow-
+	perm-fix -s -m 600 -o 0 -g 0 /etc/shadow /etc/gshadow /etc/shadow- /etc/gshadow-
 fi
 #
 # Sudoers configuration
 if hash sudo &>/dev/null; then
-	find /etc/sudoers.d /etc/sudoers -type f -print0 | perm-fix -m 640 -o 0 -g 0
-	find /etc/sudoers.d -type d -print0 | perm-fix -m 750 -o 0 -g 0
+	find /etc/sudoers.d /etc/sudoers -type f -print0 | perm-fix -s -m 640 -o 0 -g 0
+	find /etc/sudoers.d -type d -print0 | perm-fix -s -m 750 -o 0 -g 0
 fi
 
 
@@ -77,44 +77,44 @@ fi
 # Configurations
 #
 # Bootloader config
-find /boot -type f -print0 | perm-fix -m 640 -o 0 -g 0
-find /boot -type d -print0 | perm-fix -m 750 -o 0 -g 0
+find /boot -type f -print0 | perm-fix -s -m 640 -o 0 -g 0
+find /boot -type d -print0 | perm-fix -s -m 750 -o 0 -g 0
 #
 # AuditD/rsyslog configurations
-find /etc/audit /etc/rsyslog.d /etc/rsyslog.conf -mindepth 1 -type f -print0 | perm-fix -m 640 -o 0 -g 0
-find /etc/audit /etc/rsyslog.d -type d -print0 | perm-fix -m 750 -o 0 -g 0
+find /etc/audit /etc/rsyslog.d /etc/rsyslog.conf -mindepth 1 -type f -print0 | perm-fix -s -m 640 -o 0 -g 0
+find /etc/audit /etc/rsyslog.d -type d -print0 | perm-fix -s -m 750 -o 0 -g 0
 #
 # SSH configurations, private keys, and public keys.
 if hash sshd &>/dev/null; then
-	find /etc/ssh -type f -print0 | perm-fix -m 600 -o 0 -g 0
-	find /etc/ssh -type d -print0 | perm-fix -m 750 -o 0 -g 0
-	find /etc/ssh -name '*.pub' -type f -print0 | perm-fix -m 644 -o 0 -g 0
+	find /etc/ssh -type f -print0 | perm-fix -s -m 600 -o 0 -g 0
+	find /etc/ssh -type d -print0 | perm-fix -s -m 750 -o 0 -g 0
+	find /etc/ssh -name '*.pub' -type f -print0 | perm-fix -s -m 644 -o 0 -g 0
 else
 	log i 'SSHD not detected; skipping SSHD file permission fixes...'
 fi
 #
 # Secure MOTD/banners are secured
-perm-fix -m 644 -o 0 -g 0 /etc/issue /etc/issue.net /etc/motd
+perm-fix -s -m 644 -o 0 -g 0 /etc/issue /etc/issue.net /etc/motd
 #
 # Secure global shell profiles
-find /etc/profile /etc/profile.d /etc/bashrc /etc/bash.bashrc -type f -print0 | perm-fix -m 644 -o 0 -g 0
-find /etc/profile.d -type d -print0 | perm-fix -m 755 -o 0 -g 0
+find /etc/profile /etc/profile.d /etc/bashrc /etc/bash.bashrc -type f -print0 | perm-fix -s -m 644 -o 0 -g 0
+find /etc/profile.d -type d -print0 | perm-fix -s -m 755 -o 0 -g 0
 #
 # Secure local home directories
 mkdir -p "${log_dir}/home-diffs"
 for entry in "${passwd[@]}"; do
-	IFS=':' read -rd $'\n' user _ uid gid _ home shell <<<"${entry}"
+	IFS=':' read -r -d $'\n' user _ uid gid _ home shell <<<"${entry}"
 	[[ ${shell} =~ /('nologin'|'false')$ || ${home} =~ ^('/'|'/bin')$ ]] && continue
-	perm-fix -m 700 -o "${uid}" -g "${gid}" "${home}" "${home}/.ssh" "${home}/.gnupg"
-	perm-fix -m 600 -o "${uid}" -g "${gid}" "${home}/.ssh/authorized_keys" "${home}/.ssh/id_"*
+	perm-fix -s -m 700 -o "${uid}" -g "${gid}" "${home}" "${home}/.ssh" "${home}/.gnupg"
+	perm-fix -s -m 600 -o "${uid}" -g "${gid}" "${home}/.ssh/authorized_keys" "${home}/.ssh/id_"*
 	diff -r /etc/skel "${home}" --unified >"${log_dir}/home-diffs/${user}-${uid}"
 done
 #
 # APT keyrings
-find /etc/apt/trusted.gpg.d /usr/share/keyrings -type f -print0 | perm-fix -m 644 -o 0 -g 0
+find /etc/apt/trusted.gpg.d /usr/share/keyrings -type f -print0 | perm-fix -s -m 644 -o 0 -g 0
 #
 # FHS temp directories are world-writable w/ sticky-bit.
-perm-fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
+perm-fix -s -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 
 
 
@@ -125,15 +125,15 @@ perm-fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 #
 # SystemD units
 if [[ ${init} == 'systemd' ]]; then
-	find /etc/systemd/system -type f -print0 | perm-fix -m 640 -o 0 -g 0
-	find /etc/systemd/system -type d -print0 | perm-fix -m 750 -o 0 -g 0
+	find /etc/systemd/system -type f -print0 | perm-fix -s -m 640 -o 0 -g 0
+	find /etc/systemd/system -type d -print0 | perm-fix -s -m 750 -o 0 -g 0
 else
 	log i 'Initialization system is not SystemD; not checking SystemD unit file permissions.'
 fi
 #
 # Scheduled tasks
-find /etc/crontab /etc/cron.d /etc/cron.allow /etc/cron.deny /etc/anacrontab -type f -print0 | perm-fix -m 640 -o 0 -g 0
-find /etc/cron.{hourly,daily,weekly,monthly} -print0 | perm-fix -m 750 -o 0 -g 0
+find /etc/crontab /etc/cron.d /etc/cron.allow /etc/cron.deny /etc/anacrontab -type f -print0 | perm-fix -s -m 640 -o 0 -g 0
+find /etc/cron.{hourly,daily,weekly,monthly} -print0 | perm-fix -s -m 750 -o 0 -g 0
 
 
 
@@ -143,17 +143,17 @@ find /etc/cron.{hourly,daily,weekly,monthly} -print0 | perm-fix -m 750 -o 0 -g 0
 # Logs
 #
 # General Logs
-perm-fix -m 755 -o 0 -g 0 /var/log
-find /var/log -mindepth 1 -type f -print0 | perm-fix -m 640
-find /var/log -mindepth 1 -type d -print0 | perm-fix -m 750
+perm-fix -s -m 755 -o 0 -g 0 /var/log
+find /var/log -mindepth 1 -type f -print0 | perm-fix -s -m 640
+find /var/log -mindepth 1 -type d -print0 | perm-fix -s -m 750
 #
 # AuditD logs
 auditd_log_file="$(awk -F ' = ' '/^\s*log_file/ { print $2 }' /etc/audit/auditd.conf 2>/dev/null)"
 auditd_log_dir="${auditd_log_file%/*}"
 if [[ -n ${auditd_log_file} && -d ${auditd_log_dir} ]]; then
 	group="$(awk -F '=' '/^log_group/ {gsub(/[ \t]/, "", $2); print $2}' /etc/audit/auditd.conf)"
-	find -- "${auditd_log_dir}" -type f -print0 | perm-fix -m 640 -o 0 -g "${group}"
-	find -- "${auditd_log_dir}" -type d -print0 | perm-fix -m 750 -o 0 -g "${group}"
+	find -- "${auditd_log_dir}" -type f -print0 | perm-fix -s -m 640 -o 0 -g "${group}"
+	find -- "${auditd_log_dir}" -type d -print0 | perm-fix -s -m 750 -o 0 -g "${group}"
 	unset group
 fi
 #
