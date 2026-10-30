@@ -72,17 +72,17 @@ case "${selection}" in
 	firewall-cmd --reload
 	;;
 *'(pf)'*)
-	pkg install -fy FreeBSD-pf && log i 'Reinstalled "Packet Filters" package.'
+	pkg install -f -y FreeBSD-pf && log i 'Reinstalled "Packet Filters" package.'
 	mv -v /etc/pf.conf{,'.bak'} && log i 'Backed up current pf configuration.'
 	install -o 0 -g wheel -m 640 cnf/pf.conf /etc/pf.conf && log i 'Installed preset pf configuration.'
-	if pfctl -nf /etc/pf.conf; then
+	if pfctl -n -f /etc/pf.conf; then
 		log i 'Passed syntax check.'
 		rm -v /etc/pf.conf~
 		pfctl -f /etc/pf.conf && log i 'Reloaded pf configuration.'
 	else
 		log e 'New pf configuration failed syntax check.'
 		if [[ -f '/etc/pf.conf.bak' ]]; then
-			mv -vf /etc/pf.conf{'.bak',} && log i 'Restored original pf configuration.'
+			mv -v -f /etc/pf.conf{'.bak',} && log i 'Restored original pf configuration.'
 			pfctl -f /etc/pf.conf && log i 'Reloaded original pf configuration.'
 		else
 			rm -v /etc/pf.conf{,'.bak'}
