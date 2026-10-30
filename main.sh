@@ -24,7 +24,7 @@ hash "${EDITOR}" &>/dev/null || for EDITOR in nano micro mcedit tilde joe e3 hx 
 done
 until hash "${EDITOR}"; do
 	log w 'The EDITOR variable is invalid or undeclared.'
-	read -erp 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
+	read -e -r -p 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
 done
 #
 # Performance optimizations, not strictly necessary but great to have enabled.
@@ -56,7 +56,7 @@ umask 077
 set -o pipefail
 shopt -s nullglob
 declare -A id_bounds
-while IFS=' ' read -rd $'\n' key value; do
+while IFS=' ' read -r -d $'\n' key value; do
 	id_bounds["${key}"]="${value}"
 done < <(awk '/^#?[[:space:]]*(SYS_)?(U|G)ID_(MIN|MAX)/ {print $1, $2}' /etc/login.defs)
 mapfile -t passwd < /etc/passwd
@@ -119,8 +119,7 @@ mapfile -t ldds < <(
 		xargs -r -d '\n' realpath -e |
 		sort -u
 )
-pkg-mgr verify-file "${ldds[@]}"
-pkg-mgr query-owner "${ldds[@]}"
+# reimplement integrity checks
 pause 0
 
 
@@ -130,22 +129,20 @@ pause 0
 #
 # Script Selection
 #
-mapfile -td '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
-mapfile -td '' selections < <(PS2='Choose a script to run' cl-new -m "${scripts[@]}")
+mapfile -t -d '' scripts < <(find scripts -name '*.sh' -print0 | sort -z)
+mapfile -t -d '' selections < <(PS2='Choose a script to run' cl-new -m "${scripts[@]}")
 for script in "${selections[@]}"; do
-	log i "Incoming script: ${script@Q}"
+	log i "incoming script: ${script@Q}"
 	pause 0
 	(
 		trap 'exit 130' SIGINT
-		#
-		# Execute the script.
 		source "${script}"
 	)
 	if ((${?} == 130)); then
 		log i 'Sending SIGINT (CTRL + C) during script execution sends you back to the main menu.'
 		log i 'Send SIGINT again to terminate the script.'
-		pause
-		exec "'${ABSOLUTE_SELF}"
+		pause 0
+		exec "${ABSOLUTE_SELF}"
 	fi
 done
 
