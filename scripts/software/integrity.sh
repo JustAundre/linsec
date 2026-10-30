@@ -21,7 +21,7 @@ if ((!${#options[@]})); then
 	log i 'Passed integrity check—no further action needed.'
 	exit 0
 fi
-mapfile -td '' selections < <(PS2='Select packages to reinstall—the listed packages have been found to deviate from base installation.' cl-new -mo "${options[@]}")
+mapfile -t -d '' selections < <(PS2='Select packages to reinstall—the listed packages have been found to deviate from base installation.' cl-new -m -o "${options[@]}")
 ((${#selections[@]})) && case "${pkg_backend}" in
 'apt-get')
 	xargs -r apt-get install --reinstall -y <<<"${selections[@]}"
