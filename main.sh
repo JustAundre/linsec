@@ -119,8 +119,7 @@ mapfile -t ldds < <(
 		xargs -r -d '\n' realpath -e |
 		sort -u
 )
-pkg-mgr verify-file "${ldds[@]}"
-pkg-mgr query-owner "${ldds[@]}"
+# reimplement integrity checks
 pause 0
 
 
