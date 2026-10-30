@@ -12,7 +12,7 @@
 	PROMPT_COMMAND='history -a; history -w'
 	UID="$(< /proc/self/loginuid)"
 	[[ ${UID} == 4294967295 ]] && UID="$(id -u)"
-	USER="$(id -nu "${UID}")"
+	USER="$(id -n -u "${UID}")"
 	HOME=~${USER}
 	LOGNAME="${USER}"
 	LD_PRELOAD=''
@@ -28,8 +28,8 @@
 	for var in SSH_CONNECTION SSH_CLIENT; do
 		[[ -z "${var}" ]] && "${var}=Local"
 	done
-	declare -rx UID USER HOME LOGNAME LD_PRELOAD HISTFILE HISTSIZE HISTFILESIZE HISTIGNORE HISTCONTROL HOSTNAME SSH_CONNECTION TTY SSH_TTY SSH_CLIENT SSH_ORIGINAL_COMMAND
+	declare -r -x UID USER HOME LOGNAME LD_PRELOAD HISTFILE HISTSIZE HISTFILESIZE HISTIGNORE HISTCONTROL HOSTNAME SSH_CONNECTION TTY SSH_TTY SSH_CLIENT SSH_ORIGINAL_COMMAND
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics
-	builtin enable -n set shopt umask kill builtin command getopts unalias ulimit disown enable times alias echo printf
+	builtin enable -n set shopt umask kill builtin command unalias ulimit disown enable times alias echo printf
 } &>/dev/null
