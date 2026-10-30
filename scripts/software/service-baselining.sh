@@ -9,7 +9,7 @@
 #
 case "${init}" in
 'systemd')
-	while IFS='' read -rd '' path; do
+	while IFS='' read -r -d '' path; do
 		# Symlinks
 		if [[ -h "${path}" ]]; then
 			resolved_path="$(readlink -- "${path}")"
@@ -67,7 +67,7 @@ case "${init}" in
 		;;
 	'dnf'|'yum')
 		for path in /etc/rc.d/init.d/*; do
-			rpm -qf "${path}" 2>(log w) | log i
+			rpm -q -f "${path}" 2>(log w) | log i
 		done
 		;;
 	esac
