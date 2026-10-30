@@ -30,7 +30,7 @@ systemctl stop nginx
 #
 # Backup current configuration
 log i "Backing up ${nginx[root]@Q} to ${nginx[backup]}..."
-cp -av "${nginx[root]}" "${nginx[backup]}"
+cp -a -v "${nginx[root]}" "${nginx[backup]}"
 
 
 
@@ -60,12 +60,12 @@ directives=(
 	"listen"
 )
 for directive in "${directives[@]}"; do
-	sed -Ei "\\${sed_delim}^[[:space:]]*${directive}[[:space:]]${sed_delim}d" "${nginx[config]}"
+	sed -E -i "\\${sed_delim}^[[:space:]]*${directive}[[:space:]]${sed_delim}d" "${nginx[config]}"
 done
 #
 # Create TLS snippet
 log i 'Creating RSA:4096 certificate/key pair...'
-mkdir -pv "$(dirname "${nginx[ssl_cert]}")"
+mkdir -p -v "$(dirname "${nginx[ssl_cert]}")"
 openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "${nginx[ssl_key]}" -out "${nginx[ssl_cert]}"
 cat > "${nginx[snippets]}/server-tls.conf" <<-EOF
 	listen 443 ssl default_server;
@@ -94,11 +94,16 @@ insq "${nginx[config]}" 'server[[:space:]]*\{' append 1\
 # Optional Hardening
 #
 # Install fail2ban with the standard nginx jails
-# TODO: Needs refactoring
 if confirm 'Install, enable and configure fail2ban for Nginx'; then
-	pkg-mgr install fail2ban
-	mkdir -vp /etc/fail2ban/jail.d
-	install -vm 640 -o 0 -g 0 cnf/f2b/nginx.local /etc/fail2ban/jail.d/nginx.local
+	case "${pkg_backend}" in
+	'apt-get') "${pkg_backend}" install --reinstall fail2ban -y -o Dpkg::Options::='--force-confmiss' ;;
+	'dnf') "${pkg_backend}" reinstall fail2ban -y ;;
+	'yum') "${pkg_backend}" reinstall fail2ban -y ;;
+	'pacman') "${pkg_backend}" -S fail2ban --noconfirm ;;
+	'pkg') "${pkg_backend}" install -f fail2ban ;;
+	esac
+	mkdir -v -p /etc/fail2ban/jail.d
+	install -v -m 640 -o 0 -g 0 cnf/f2b/nginx.local /etc/fail2ban/jail.d/nginx.local
 	systemctl enable --now fail2ban
 fi
 
@@ -112,7 +117,7 @@ fi
 if ! nginx -t; then
 	log e 'Configuration failed validation.'
 	log i 'Reverting configuration to backup...'
-	rm -rfv "${nginx[root]}"
+	rm -r -f -v "${nginx[root]}"
 	mv -v "${nginx[backup]}" "${nginx[root]}"
 	systemctl restart nginx
 	exit 12
