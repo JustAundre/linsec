@@ -23,10 +23,6 @@ case "${selection}" in
 	'pacman')
 		"${pkg_backend}" -S ufw --noconfirm
 		;;
-	*)
-		log e 'Package manager not supported.'
-		exit 12
-		;;
 	esac
 	mkdir -p /etc/ufw
 	true >>/etc/ufw/before.rules 3>>/etc/ufw/before6.rules 4>>/etc/ufw/after.rules 5>>/etc/ufw/after6.rules
@@ -48,10 +44,6 @@ case "${selection}" in
 		;;
 	'pacman')
 		"${pkg_backend}" -S --noconfirm firewalld
-		;;
-	*)
-		log e 'Package manager not supported.'
-		exit 12
 		;;
 	esac
 	systemctl unmask firewalld
@@ -89,9 +81,5 @@ case "${selection}" in
 		fi
 	fi
 	service pf restart
-	;;
-*)
-	log e 'Firewall software unsupported.'
-	exit 11
 	;;
 esac

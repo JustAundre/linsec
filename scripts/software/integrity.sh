@@ -12,10 +12,6 @@ case "${pkg_backend}" in
 'pkg')
 	mapfile -t options < <(pkg check -s -a --checksum 2>&1 | awk -F : '/checksum mismatch|missing/ {print $1}' | sort -u)
 	;;
-*)
-	log e 'Package manager not supported.'
-	exit 11
-	;;
 esac
 if ((!${#options[@]})); then
 	log i 'Passed integrity check—no further action needed.'
@@ -34,9 +30,5 @@ mapfile -t -d '' selections < <(PS2='Select packages to reinstall—the listed p
 	;;
 'pkg')
 	xargs -r pkg install -f -y <<<"${selections[@]}"
-	;;
-*)
-	log e 'Package manager not supported.'
-	exit 11
 	;;
 esac
