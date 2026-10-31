@@ -63,7 +63,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 			log i 'Enabled faillock.'
 			;;
 		'Reject passwordless logins')
-			if ! grep -q 'nullok' /usr/share/pam-configs/unix; then
+			if ! grep -q nullok /usr/share/pam-configs/unix; then
 				log i 'Logins for passwordless users are already rejected.'
 				continue
 			fi
@@ -85,7 +85,7 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 	trap '[[ -f base.txz ]] && rm -v base.txz' EXIT
 	base_sys_url="https://download.freebsd.org/releases/$(uname -m)/$(freebsd-version | cut -d '-' -f 1,2)/base.txz"
 	log i "Fetching base system image from ${base_sys_url@Q}..."
-	fetch -o 'base.txz' -a -s -r "${base_sys_url}" 2>&1 1>&2 | log e || exit 12
+	fetch -o base.txz -a -s -r "${base_sys_url}" 2>&1 1>&2 | log e || exit 12
 	#
 	# Backup existing /etc/pam.d directory and extract base.
 	mv /etc/pam.d{,'.bak'}

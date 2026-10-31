@@ -62,8 +62,14 @@ case "${init}" in
 	# TODO: Needs improvement
 	case "${pkg_backend}" in
 	'pkg')
-		pkg which /etc/rc.d/* | grep -v "not found" | log i
-		pkg which /etc/rc.d/* | grep "not found" | log w
+		mapfile -t output < <(pkg which /etc/rc.d/*)
+		for line in "${output[@]}"; do
+			if [[ ${line} == *'not found'* ]]; then
+				log w "${line}"
+			else
+				log i "${line}"
+			fi
+		done
 		;;
 	'dnf'|'yum')
 		for path in /etc/rc.d/init.d/*; do
