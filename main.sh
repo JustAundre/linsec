@@ -9,6 +9,7 @@
 #
 # CD into the script's parent directory.
 umask 027
+shopt -s nullglob
 ABSOLUTE_SELF="$(realpath -- "${0}")"
 BASE_DIR="$(dirname -- "$(realpath -- "${0}")")"
 cd "${BASE_DIR}" || exit 1
@@ -22,12 +23,12 @@ export EDITOR
 hash "${EDITOR}" &>/dev/null || for EDITOR in nano micro mcedit tilde joe e3 hx nvim vim vi kak emacs ed mp jed ash vis sam; do
 	hash "${EDITOR}" &>/dev/null && break
 done
-until hash "${EDITOR}"; do
+until hash "${EDITOR}" &>/dev/null; do
 	log w 'The EDITOR variable is invalid or undeclared.'
 	read -e -r -p 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
 done
 #
-# Performance optimizations, not strictly necessary but great to have enabled.
+# Performance optimizations--not strictly necessary but great to have enabled.
 for cmd in cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
 	path="/usr/lib/bash/${cmd}"
 	[[ -f ${path} ]] || continue
@@ -170,7 +171,7 @@ cat <<-EOF
 	           agape freedom of Linux
 	  ---{=========}###[@]###{===========}---
 
-	Repository version:    ${version}
+	Repository version:    ${repo_version}
 	Operating system:      $(uname -r)
 	Startup checks failed: ${#errors[@]}
 	Log directory:         ${log_dir@Q}
