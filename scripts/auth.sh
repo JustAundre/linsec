@@ -7,79 +7,128 @@
 #
 # PAM Configuration
 #
-mapfile -t -d '' selections < <(PS2='Select patches to apply.' cl-new -m -o 'Enforce password quality' 'Enforce minimum password length' 'Fail locking' 'Reject passwordless logins')
+# Menu text slug
+declare -A slug=(
+	['Enforce password quality']='pwquality'
+	['Enforce minimum password length']='minlen'
+	['Fail locking']='faillock'
+	['Reject passwordless logins']='nonullok'
+	# TODO: ['Setup AuditD TTY logging']='audit_tty'
+)
+#
+# Query user for configuration options
+mapfile -t -d '' selections < <(PS2='Select patches to apply.' cl-new -m -o "${!slug[@]}")
+#
+# Resolve the distro family once
 case "${os_info['ID']} ${os_info['ID_LIKE']}" in
-*fedora*)
-	for selection in "${selections[@]}"; do
-		case "${selection}" in
-		'Enforce password quality')
-			args+=('with-pwquality')
-			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /etc/security/pwquality.conf
-			;;
-		'Fail locking')
-			args+=('with-faillock')
-			;;
-		'Reject passwordless logins')
-			args+=('without-nullok')
-			;;
-		*)
-			log e "unknown selection ${response@Q}."
-			;;
-		esac
+*fedora*)          family='fedora'  ;;
+*debian*|*ubuntu*) family='debian'  ;;
+*freebsd*)         family='freebsd' ;;
+*)
+	log e 'unsupported operating system'
+	exit 11
+	;;
+esac
+
+log i '(Re)installing PAM modules...'
+case "${pkg_backend}" in
+'apt-get')
+	"${pkg_backend}" install --reinstall -y -o Dpkg::Options::='--force-confmiss'\
+		sssd libpam-pwquality libpam-runtime libpam-modules\
+;;
+'dnf'|'yum')
+	"${pkg_backend}" reinstall -y\
+		sssd libpwquality
+;;
+'pacman')
+	"${pkg_backend}" -S --noconfirm\
+		sssd libpwquality
+;;
+'pkg')
+	"${pkg_backend}" install -f\
+		sssd libpwquality
+;;
+esac
+#
+# Per-distro PAM options' slugs
+declare -A flag=(
+	[fedora:pwquality]='with-pwquality'
+	[debian:pwquality]='with-pwquality'
+	[fedora:faillock]='with-faillock'
+	[debian:faillock]='with-faillock'
+	[fedora:nonullok]='without-nullok'
+)
+#
+# Per-distro custom PAM configurations' slugs
+declare -A files=(
+	[fedora:pwquality]='pwquality.conf:/etc/security/pwquality.conf'
+	[debian:pwquality]='pwquality:/usr/share/pam-configs/pwquality pwquality.conf:/etc/security/pwquality.conf'
+	[debian:faillock]='faillock:/usr/share/pam-configs/faillock faillock_reset:/usr/share/pam-configs/faillock_reset faillock_notify:/usr/share/pam-configs/faillock_notify'
+	[freebsd:pwquality]='pwquality.conf:/usr/local/etc/security/pwquality.conf'
+)
+#
+# Distro-agonostic PAM configurations
+args=()
+for selection in "${selections[@]}"; do
+	key="${family}:${slug[${selection}]}"
+	[[ -n ${flag[${key}]} ]] && args+=("${flag[${key}]}")
+	for pair in ${files[${key}]}; do
+		install -m 640 -o 0 -g 0 -D -v "cnf/auth/${pair%%:*}" "${pair#*:}"
 	done
-	authselect select sssd with-pamaccess with-pwhistory with-mkhomedir with-sudo "${args[@]}" --force
+	case "${key}" in
+	debian:minlen)
+		if grep -q -E 'pam_unix\.so.+minlen=' /usr/share/pam-configs/common-password; then
+			log w 'A minimum password length is already being enforced.'
+			confirm 'Continue anyway' || continue
+		fi
+		echo 'Enter a minimum password length (default 14):'
+		response=''
+		while [[ ! ${response} =~ ^[0-9]+$ ]]; do
+			read -e -r -p '> ' response
+			[[ -z ${response} ]] && response=14
+			[[ ! ${response} =~ ^[0-9]+$ ]] && log e 'Please enter a valid positive integer.'
+		done
+		sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /usr/share/pam-configs/common-password &&
+			log i "Minimum password length set to ${response}."
+		;;
+	debian:nonullok)
+		if ! grep -q nullok /usr/share/pam-configs/unix; then
+			log i 'Logins for passwordless users are already rejected.'
+			continue
+		fi
+		sed -i "s${sed_delim}\s*nullok${sed_delim}${sed_delim}g" /usr/share/pam-configs/unix &&
+			log i 'Logins for passwordless users are now rejected.'
+		;;
+	esac
+done
+#
+# Per-distro finalization
+case "${family}" in
+fedora)
+	if hash sudo 2>/dev/null; then
+		args+=('with-sudo')
+		log i 'Detected sudo, enabling sudo PAM module.'
+	fi
+	authselect select sssd with-pamaccess with-pwhistory with-mkhomedir "${args[@]}" --force
 	authselect apply-changes
 	;;
-*debian*|*ubuntu*)
-	for selection in "${selections[@]}"; do
-		case "${selection}" in
-		'Enforce password quality')
-			case "${pkg_backend}" in
-			'apt-get') "${pkg_backend}" install --reinstall libpam-pwquality -y -o Dpkg::Options::='--force-confmiss' ;;
-			'dnf') "${pkg_backend}" reinstall libpam-pwquality -y ;;
-			'yum') "${pkg_backend}" reinstall libpam-pwquality -y ;;
-			'pacman') "${pkg_backend}" -S libpam-pwquality --noconfirm ;;
-			'pkg') "${pkg_backend}" install -f libpam-pwquality ;;
-			esac
-			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality /usr/share/pam-configs/pwquality
-			install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /etc/security/pwquality.conf
-			;;
-		'Enforce minimum password length')
-			if grep -q -E 'pam_unix\.so.+minlen=' /etc/pam.d/common-password; then
-				log w 'A minimum password length is already being enforced.'
-				confirm 'Continue anyway' || continue
-			fi
-			echo 'Enter a minimum password length:'
-			until [[ ${response} =~ ^[0-9]+$ ]]; do
-				read -e -r -p '> ' response
-			done
-			sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}[[:space:]]+minlen=[[:digit:]]+${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
-			sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /etc/pam.d/common-password
-			;;
-		'Fail locking')
-			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock /usr/share/pam-configs/faillock
-			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock_reset /usr/share/pam-configs/faillock_reset
-			install -m 640 -o 0 -g 0 -D -v cnf/auth/faillock_notify /usr/share/pam-configs/faillock_notify
-			log i 'Enabled faillock.'
-			;;
-		'Reject passwordless logins')
-			if ! grep -q nullok /usr/share/pam-configs/unix; then
-				log i 'Logins for passwordless users are already rejected.'
-				continue
-			fi
-			sed -i "s${sed_delim}\s*nullok${sed_delim}${sed_delim}g" /usr/share/pam-configs/unix &&
-				log i 'Logins for passwordless users are now rejected.'
-			;;
-		*)
-			log e "unknown selection ${response@Q}."
-			;;
-		esac
-	done
-	#
+debian)
 	# Update PAM configurations
-	((${#selections[@]})) && pam-auth-update --force --package
+	if [[ ${init} == 'systemd' ]]; then
+		args+=('systemd')
+		"${pkg_backend}" install --reinstall libpam-systemd -y -o Dpkg::Options::='--force-confmiss'
+	fi
+	if hash sudo &>/dev/null; then
+		args+=('sudo')
+		log i 'Detected sudo, enabling sudo PAM module.'
+	fi
+	if hash gnome-keyring &>/dev/null; then
+		args+=('gnome-keyring')
+		log i 'Detected gnome-keyring, enabling PAM module.'
+	fi
+	((${#selections[@]})) && DEBIAN_FRONTEND=noninteractive pam-auth-update --force --package --enable unix limits mkhomedir sss umask "${args[@]}"
 	;;
-*freebsd*)
+freebsd)
 	# TODO: TESTING NEEDED
 	# Download base image for FreeBSD system
 	trap '[[ -f base.txz ]] && rm -v base.txz' EXIT
@@ -101,17 +150,8 @@ case "${os_info['ID']} ${os_info['ID_LIKE']}" in
 			printf '%s\0' "${path}" >>"${log_dir}/unidentified-pam-overrides.txt"
 		fi
 	done
-	#
-	# Enable password quality checks
-	pkg install -f pam_pwquality
-	install -m 640 -o 0 -g 0 -D -v cnf/auth/pwquality.conf /usr/local/etc/security/pwquality.conf
-	;;
-*)
-	log e 'unsupported operating system'
-	exit 11
 	;;
 esac
-
 
 
 
