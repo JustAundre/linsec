@@ -38,15 +38,15 @@ fi
 mapfile -t -d '' selections < <(PS2='Select packages to reinstall—the listed packages have been found to deviate from base installation.' cl-new -m -o "${options[@]}")
 case "${pkg_backend}" in
 'apt-get')
-	xargs -r apt-get install --reinstall -y <<<"${selections[@]}"
+	"${pkg_backend}" install --reinstall -y "${selections[@]}"
 	;;
 'dnf'|'yum')
-	xargs -r "${pkg_backend}" reinstall -y <<<"${selections[@]}"
+	"${pkg_backend}" reinstall -y "${selections[@]}"
 	;;
 'pacman')
-	xargs -r pacman -S --noconfirm <<<"${selections[@]}"
+	"${pkg_backend}" -S --noconfirm "${selections[@]}"
 	;;
 'pkg')
-	xargs -r pkg install -f -y <<<"${selections[@]}"
+	"${pkg_backend}" install -f -y "${selections[@]}"
 	;;
 esac
