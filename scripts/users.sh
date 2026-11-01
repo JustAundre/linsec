@@ -12,12 +12,13 @@ mapfile -t shells < <(grep -E '^/' /etc/shells)
 #
 # Compile vanity tags for display in checklists
 # Create reverse-lookup associative array for matching backwards-matching from vanity to IDs
+# Note: the acceptance of system users returns 0 ((falsy)), so it is inverted to match the expected behavior
 confirm 'Exclude system users from audit'
-exclude_sys_users="${?}"
+include_sys_users="${?}"
 declare -A reverse_lookup
 for entry in "${passwd[@]}"; do
 	IFS=':' read -r -d $'\n' user _ uid gid _ _ shell <<<"${entry}"
-	((exclude_sys_users)) && [[ "${shell}" =~ /(nologin|false)$ ]] && continue
+	((include_sys_users)) || [[ "${shell}" =~ /(nologin|false)$ ]] && continue
 	user_vanities+=("$(id -- "${user}") sh=${shell@Q}")
 	reverse_lookup["${user_vanities["$((${#user_vanities[@]} - 1))"]}"]="${user}"
 done
@@ -60,7 +61,7 @@ for selection in "${selections[@]}"; do
 		log e 'users.sh: [Delete] is mutually exclusive with all other options.'
 		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection@Q}"
 		continue
-	elif ((index['Remove password'] && index['Set manual password'] || index['Set random password'])); then
+	elif ((index['Remove password'] && (index['Set manual password'] + index['Set random password']))); then
 		log e 'users.sh: [Remove password] is mutually exclusive with [Set manual/random password].'
 		log i "users.sh: skipping all processing (as a result of the above error) for user: ${selection@Q}"
 		continue
@@ -86,9 +87,11 @@ for selection in "${selections[@]}"; do
 		passwd "${user}"
 	fi
 	if ((index['Set random password'])); then
-		symbols="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 8)"
-		alphanumerics+="$(mktemp XXXXXXXX --dry-run)"
-		echo "${user}:${symbols:0:4}${alphanumerics}${symbols:4:4}"
+		symbols="$(tr < /dev/random --complement --delete '[0-9!@#$%^&*()[]{};,.`~]' | head -c 6)"
+		alnums_1="$(mktemp XXXX --dry-run)"
+		alnums_2="$(mktemp XXXX --dry-run)"
+		rng_passwd="${symbols:0:3}${alnums_1,,}${alnums_2^^}${symbols:3:3}"
+		echo "${user}:${rng_passwd}"
 		chpasswd <<<"${user}:${rng_passwd}"
 	fi
 	if ((index['Expire password'])); then
