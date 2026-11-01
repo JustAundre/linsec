@@ -55,7 +55,16 @@ init="$(ps -p 1 -o comm=)"
 umask 077
 set -o pipefail
 shopt -s nullglob
-declare -A id_bounds
+declare -A id_bounds=(
+	[UID_MIN]=1000
+	[UID_MAX]=60000
+	[GID_MIN]=1000
+	[GID_MAX]=60000
+	[SYS_UID_MIN]=500
+	[SYS_UID_MAX]=999
+	[SYS_GID_MIN]=500
+	[SYS_GID_MAX]=999
+)
 while IFS=' ' read -r -d $'\n' key value; do
 	id_bounds["${key}"]="${value}"
 done < <(awk '/^#?[[:space:]]*(SYS_)?(U|G)ID_(MIN|MAX)/ {print $1, $2}' /etc/login.defs)
