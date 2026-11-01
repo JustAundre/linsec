@@ -149,9 +149,9 @@ for script in "${selections[@]}"; do
 		source "${script}"
 	)
 	if ((${?} == 130)); then
-		log i 'Sending SIGINT (CTRL + C) during script execution sends you back to the main menu.'
-		log i 'Send SIGINT again to terminate the script.'
-		pause 0
+		log i 'Sending SIGINT (CTRL + C) during execution sends you here:'
+		log i 'SIGINT again to terminate, press any key to restart or wait 10 seconds to continue execution of the selected scripts.'
+		pause 10 || continue
 		exec "${ABSOLUTE_SELF}"
 	fi
 done
@@ -172,7 +172,7 @@ cat <<-EOF
 	  ---{=========}###[@]###{===========}---
 
 	Repository version:    ${repo_version}
-	Operating system:      $(uname -r)
+	Operating system:      ${os_info[PRETTY_NAME]} ${os_info[VERSION_ID]}
 	Startup checks failed: ${#errors[@]}
 	Log directory:         ${log_dir@Q}
 	# of logs:             $(files=("${log_dir}"/*.txt); printf '%d' "${#files[@]}")
