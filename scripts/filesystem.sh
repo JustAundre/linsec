@@ -7,8 +7,7 @@
 #
 # Environment Setup
 #
-log i 'Conducting filesystem searches for various criterias...'
-log i 'This may take a while.'
+log i 'Conducting filesystem searches for various criterias (this may take a while)...'
 find / -xephem -perm -0002 '(' -type f -o -type d ')' -print0 > "${log_dir}/world-writables.txt" &
 find / -xephem -type f -perm -4000 -print0 > "${log_dir}/suid-binaries.txt" &
 find / -xephem -type f -perm -2000 -print0 > "${log_dir}/sgid-binaries.txt" &
@@ -17,7 +16,7 @@ find / -xephem -nogroup -print0 > "${log_dir}/no-group.txt" &
 find / -xephem -xtype l -print0 > "${log_dir}/broken-symlinks.txt" &
 LC_ALL=C find / -xephem -name '*[! -~]*' -print0 > "${log_dir}/non-ascii-paths.txt" &
 find / -xephem -name '[^a-zA-Z0-9_.]*' -print0 > "${log_dir}/non-alphanumeric-leads.txt" &
-find /etc '(' -uid +"${id_bounds[SYS_UID_MAX]}" -o -gid +"${id_bounds[SYS_GID_MAX]}" ')' > "${log_dir}/etc-user-owned.txt" &
+find /etc '(' -uid "+${id_bounds[SYS_UID_MAX]}" -o -gid "+${id_bounds[SYS_GID_MAX]}" ')' > "${log_dir}/etc-user-owned.txt" &
 find /home -mindepth 2 -maxdepth 2 -type f '(' -name .rhosts -o -name .shosts -o -name .netrc -o -name .forward -o -path '/home/*/.ssh/rc' ')' > "${log_dir}/bad-user-configs.txt" &
 wait
 
@@ -177,12 +176,11 @@ if [[ -n ${auditd_log_file} && -d ${auditd_log_dir} ]]; then
 	unset group
 fi
 #
-# Disable core dumping
-if [[ ${init} == 'systemd' ]]; then
-	reconfig -x 'replace' -d '=' Storage none /etc/systemd/coredump.conf
-	reconfig -x 'replace' -d '=' ProcessSizeMax 0 /etc/systemd/coredump.conf
-else
-	log i 'Initialization system is not SystemD; not configuring SystemD to disable coredumps.'
+# Disable core dumps
+if [[ -f /etc/security/limits.conf ]]; then
+	grep -q -E '^\s*\*\s+hard\s+core\s+0' /etc/security/limits.conf ||
+		echo '* hard core 0' >>/etc/security/limits.conf &&
+		log i "Disabled core dumps in '/etc/security/limits.conf'."
 fi
 
 
