@@ -69,13 +69,16 @@ done
 # Identify Binaries with No Associated Package
 #
 mapfile -t -d ':' PATH_array <<<"${PATH}"
-while IFS= read -r -d '' bin; do
+while IFS='' read -r -d '' bin; do
 	pkg="$(pkg_owner "${bin}")"
 	if [[ -z ${pkg} ]]; then
 		# Binary not associated with any package
 		unidentified_pkgs+=("${bin}")
 	fi
-done < <(find "${PATH_array[@]}" -type f -executable -print0)
+done < <(
+	find "${PATH_array[@]}" -type f -executable -exec realpath -z {} + |
+		sort -uz
+)
 
 
 
