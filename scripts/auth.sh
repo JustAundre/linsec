@@ -5,7 +5,7 @@
 
 
 #
-# PAM Configuration
+# Environment Setup
 #
 # Menu text slug
 declare -A slug=(
@@ -15,40 +15,6 @@ declare -A slug=(
 	['Reject passwordless logins']='nonullok'
 	['Setup AuditD TTY logging']='audit_tty'
 )
-#
-# Query user for configuration options
-mapfile -t -d '' selections < <(PS2='Select patches to apply.' cl-new -m -o "${!slug[@]}")
-#
-# Resolve the distro family once
-case "${os_info['ID']} ${os_info['ID_LIKE']}" in
-*fedora*)          family='fedora'  ;;
-*debian*|*ubuntu*) family='debian'  ;;
-*freebsd*)         family='freebsd' ;;
-*)
-	log e 'unsupported operating system'
-	exit 11
-	;;
-esac
-
-log i '(Re)installing PAM modules...'
-case "${pkg_backend}" in
-'apt-get')
-	"${pkg_backend}" install --reinstall -y -o Dpkg::Options::='--force-confmiss'\
-		sssd libpam-pwquality libpam-runtime libpam-modules\
-;;
-'dnf'|'yum')
-	"${pkg_backend}" reinstall -y\
-		sssd libpwquality
-;;
-'pacman')
-	"${pkg_backend}" -S --noconfirm\
-		sssd libpwquality
-;;
-'pkg')
-	"${pkg_backend}" install -f\
-		sssd libpwquality
-;;
-esac
 #
 # Per-distro PAM options' slugs
 declare -A flag=(
@@ -68,6 +34,47 @@ declare -A files=(
 	[debian:audit_tty]='audit_tty:/usr/share/pam-configs/audit_tty'
 	[freebsd:pwquality]='pwquality.conf:/usr/local/etc/security/pwquality.conf'
 )
+#
+# Query user for configuration options
+mapfile -t -d '' selections < <(PS2='Select patches to apply.' cl-new -m -o "${!slug[@]}")
+#
+# Resolve the distro family once
+case "${os_info['ID']} ${os_info['ID_LIKE']}" in
+*fedora*)          family='fedora'  ;;
+*debian*|*ubuntu*) family='debian'  ;;
+*freebsd*)         family='freebsd' ;;
+*)
+	log e 'unsupported operating system'
+	exit 11
+	;;
+esac
+
+
+
+
+
+#
+# PAM Modules Installation
+#
+log i '(Re)installing PAM modules...'
+case "${pkg_backend}" in
+'apt-get')
+	"${pkg_backend}" install --reinstall -y -o Dpkg::Options::='--force-confmiss'\
+		sssd libpam-pwquality libpam-runtime libpam-modules\
+;;
+'dnf'|'yum')
+	"${pkg_backend}" reinstall -y\
+		sssd libpwquality
+;;
+'pacman')
+	"${pkg_backend}" -S --noconfirm\
+		sssd libpwquality
+;;
+'pkg')
+	"${pkg_backend}" install -f\
+		sssd libpwquality
+;;
+esac
 #
 # Distro-agonostic PAM configurations
 args=()
