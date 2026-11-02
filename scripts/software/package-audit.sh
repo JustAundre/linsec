@@ -60,7 +60,7 @@ for bin in "${badware[@]}" "${crackers[@]}"; do
 		identified_pkgs+=("${pkg}")
 	else
 		# Package not identified by package manager
-		unidentified_pkgs+=("${pkg}")
+		unidentified_pkgs+=("${path}")
 	fi
 done
 
@@ -72,7 +72,7 @@ done
 # Query User for Removal
 #
 mapfile -td '' selections_1 < <(PS2='Select identified potentially unwanted software to remove' cl-new -m -o "${identified_pkgs[@]}")
-mapfile -td '' selections_2 < <(PS2='Select unidentified potentially unwanted software to remove' cl-new -m -o "${unidentified_pkgs[@]}")
+mapfile -td '' selections_2 < <(PS2='Select binaries with no associated package to remove' cl-new -m -o "${unidentified_pkgs[@]}")
 ((${#selections_1[@]} + ${#selections_2[@]})) && for selection in "${selections_1[@]}" "${selections_2[@]}"; do
 	case "${pkg_backend}" in
 	'apt-get')
