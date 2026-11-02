@@ -11,21 +11,22 @@ pkg_owner() {
 	local pkg=''
 	case "${pkg_backend}" in
 	'apt-get')
-		read -r pkg < <(dpkg -S "${1}" 2>/dev/null)
+		pkg="$(dpkg -S "${1}" 2>/dev/null)"
+		[[ -z ${pkg} ]] && pkg="$(dpkg -S "${1#'/usr'}" 2>/dev/null)"
 		pkg="${pkg%%[:,]*}"
 		;;
 	'dnf'|'yum')
-		read -r pkg < <(rpm -qf --qf '%{NAME}\n' "${1}" 2>/dev/null)
+		pkg="$(rpm -qf --qf '%{NAME}\n' "${1}" 2>/dev/null)"
 		;;
 	'pacman')
-		read -r pkg < <(pacman -Qoq "${1}" 2>/dev/null)
+		pkg="$(pacman -Qoq "${1}" 2>/dev/null)"
 		;;
 	'pkg')
-		read -r pkg < <(pkg which -q "${1}" 2>/dev/null)
+		pkg="$(pkg which -q "${1}" 2>/dev/null)"
 		pkg="${pkg%-*}"
 		;;
 	esac
-	printf '%s' "${pkg}"
+	echo "${pkg}"
 }
 export -f pkg_owner
 badware=(
