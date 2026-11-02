@@ -58,9 +58,6 @@ for bin in "${badware[@]}" "${crackers[@]}"; do
 	if [[ -n ${pkg} ]]; then
 		# Package identified by package manager
 		identified_pkgs+=("${pkg}")
-	else
-		# Package not identified by package manager
-		unidentified_pkgs+=("${path}")
 	fi
 done
 
@@ -69,10 +66,26 @@ done
 
 
 #
+# Identify Binaries with No Associated Package
+#
+mapfile -t -d ':' PATH_array <<<"${PATH}"
+while IFS= read -r -d '' bin; do
+	pkg="$(pkg_owner "${bin}")"
+	if [[ -z ${pkg} ]]; then
+		# Binary not associated with any package
+		unidentified_pkgs+=("${bin}")
+	fi
+done < <(find "${PATH_array[@]}" -type f -executable -print0)
+
+
+
+
+
+#
 # Query User for Removal
 #
-mapfile -td '' selections_1 < <(PS2='Select identified potentially unwanted software to remove' cl-new -m -o "${identified_pkgs[@]}")
-mapfile -td '' selections_2 < <(PS2='Select binaries with no associated package to remove' cl-new -m -o "${unidentified_pkgs[@]}")
+mapfile -t -d '' selections_1 < <(PS2='Select identified potentially unwanted software to remove' cl-new -m -o "${identified_pkgs[@]}")
+mapfile -t -d '' selections_2 < <(PS2='Select binaries with no associated package to remove' cl-new -m -o "${unidentified_pkgs[@]}")
 ((${#selections_1[@]} + ${#selections_2[@]})) && for selection in "${selections_1[@]}" "${selections_2[@]}"; do
 	case "${pkg_backend}" in
 	'apt-get')
