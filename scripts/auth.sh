@@ -13,7 +13,7 @@ declare -A slug=(
 	['Enforce minimum password length']='minlen'
 	['Fail locking']='faillock'
 	['Reject passwordless logins']='nonullok'
-	# TODO: ['Setup AuditD TTY logging']='audit_tty'
+	['Setup AuditD TTY logging']='audit_tty'
 )
 #
 # Query user for configuration options
@@ -57,6 +57,7 @@ declare -A flag=(
 	[fedora:faillock]='with-faillock'
 	[debian:faillock]='with-faillock'
 	[fedora:nonullok]='without-nullok'
+	[debian:audit_tty]='audit_tty'
 )
 #
 # Per-distro custom PAM configurations' slugs
@@ -64,11 +65,13 @@ declare -A files=(
 	[fedora:pwquality]='pwquality.conf:/etc/security/pwquality.conf'
 	[debian:pwquality]='pwquality:/usr/share/pam-configs/pwquality pwquality.conf:/etc/security/pwquality.conf'
 	[debian:faillock]='faillock:/usr/share/pam-configs/faillock faillock_reset:/usr/share/pam-configs/faillock_reset faillock_notify:/usr/share/pam-configs/faillock_notify'
+	[debian:audit_tty]='audit_tty:/usr/share/pam-configs/audit_tty'
 	[freebsd:pwquality]='pwquality.conf:/usr/local/etc/security/pwquality.conf'
 )
 #
 # Distro-agonostic PAM configurations
 args=()
+fedora_audit_tty=0
 for selection in "${selections[@]}"; do
 	key="${family}:${slug[${selection}]}"
 	[[ -n ${flag[${key}]} ]] && args+=("${flag[${key}]}")
@@ -99,6 +102,21 @@ for selection in "${selections[@]}"; do
 		sed -i "s${sed_delim}\s*nullok${sed_delim}${sed_delim}g" /usr/share/pam-configs/unix &&
 			log i 'Logins for passwordless users are now rejected.'
 		;;
+	debian:audit_tty|fedora:audit_tty)
+		log i 'Installing auditd...'
+		case "${pkg_backend}" in
+		'apt-get')   "${pkg_backend}" install -y auditd ;;
+		'dnf'|'yum') "${pkg_backend}" install -y audit ;;
+		esac
+		if [[ ${init} == 'systemd' ]]; then
+			systemctl enable --now auditd &&
+				log i 'auditd enabled.'
+		fi
+		[[ ${family} == 'fedora' ]] && fedora_audit_tty=1
+		;;
+	*:audit_tty)
+		log w 'TTY audit logging (pam_tty_audit) support from this script is only available for Fedora and Debian-based distributions.'
+		;;
 	esac
 done
 #
@@ -111,6 +129,14 @@ fedora)
 	fi
 	authselect select sssd with-pamaccess with-pwhistory with-mkhomedir "${args[@]}" --force
 	authselect apply-changes
+	#
+	# Must run after authselect, otherwise it would overwrite this change
+	if ((fedora_audit_tty)) && ! grep -q 'pam_tty_audit' /etc/pam.d/postlogin; then
+		if echo 'session	optional	pam_tty_audit.so enable=*' >>/etc/pam.d/postlogin; then
+			log i 'TTY audit logging enabled via postlogin.'
+			log w 'TTY audit will not persist authselect changes. You must re-enable it after each authselect change.'
+		fi
+	fi
 	;;
 debian)
 	# Update PAM configurations

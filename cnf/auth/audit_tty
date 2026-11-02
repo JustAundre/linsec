@@ -1,0 +1,7 @@
+Name: TTY audit logging (pam_tty_audit)
+Default: yes
+Priority: 0
+Session-Type: Additional
+Session-Interactive-Only: yes
+Session:
+	optional	pam_tty_audit.so enable=*
