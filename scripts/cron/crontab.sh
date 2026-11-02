@@ -7,7 +7,7 @@
 #
 # Crontabs
 #
-if hash crontab &>/dev/null; then
+if ! hash crontab &>/dev/null; then
 	log e 'Crontab not found in the PATH and therefore there are no crontabs to audit.'
 	exit 11
 fi
