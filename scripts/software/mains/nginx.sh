@@ -67,7 +67,7 @@ done
 log i 'Creating RSA:4096 certificate/key pair...'
 mkdir -p -v "$(dirname "${nginx[ssl_cert]}")"
 openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "${nginx[ssl_key]}" -out "${nginx[ssl_cert]}"
-cat > "${nginx[snippets]}/server-tls.conf" <<-EOF
+cat >"${nginx[snippets]}/server-tls.conf" <<-EOF
 	listen 443 ssl default_server;
 	listen [::]:443 ssl default_server;
 	http2 on;

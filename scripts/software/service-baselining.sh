@@ -51,12 +51,12 @@ case "${init}" in
 			log w "Custom service: ${path@Q}"
 		fi
 	done < <(find /etc/systemd/system -maxdepth 1 -mindepth 1 -print0)
-	printf '%s\0' "${masked_svcs[@]}" > "${log_dir}/masked-services.txt"
-	printf '%s\0' "${custom_symlinked_svcs[@]}" > "${log_dir}/custom-services-(symlinked).txt"
-	printf '%s\0' "${overrides_dirs[@]}" > "${log_dir}/service-overrides-dirs.txt"
-	printf '%s\0' "${depends_dirs[@]}" > "${log_dir}/service-dependencies-dirs.txt"
-	printf '%s\0' "${unknown_dirs[@]}" > "${log_dir}/service-unknown-dirs.txt"
-	printf '%s\0' "${custom_svcs[@]}" > "${log_dir}/custom-services.txt"
+	printf '%s\0' "${masked_svcs[@]}" >"${log_dir}/masked-services.txt"
+	printf '%s\0' "${custom_symlinked_svcs[@]}" >"${log_dir}/custom-services-(symlinked).txt"
+	printf '%s\0' "${overrides_dirs[@]}" >"${log_dir}/service-overrides-dirs.txt"
+	printf '%s\0' "${depends_dirs[@]}" >"${log_dir}/service-dependencies-dirs.txt"
+	printf '%s\0' "${unknown_dirs[@]}" >"${log_dir}/service-unknown-dirs.txt"
+	printf '%s\0' "${custom_svcs[@]}" >"${log_dir}/custom-services.txt"
 	;;
 'init')
 	# TODO: Needs improvement

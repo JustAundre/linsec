@@ -57,5 +57,5 @@ fi
 #
 # Diff
 #
-diff "${ssh[root]}" "${ssh[backup]}" -r -p > "${log_dir}/ssh_config_diffs.txt"
+diff "${ssh[root]}" "${ssh[backup]}" -r -p >"${log_dir}/ssh_config_diffs.txt"
 diff "${ssh[root]}" "${ssh[backup]}" -r -p --color=always | less -R
