@@ -129,7 +129,23 @@ mapfile -t ldds < <(
 		xargs -r -d '\n' realpath -e |
 		sort -u
 )
-# reimplement integrity checks
+case "${pkg_backend}" in
+'apt-get')
+	pkg="$(dpkg -S "${ldds[@]}" 2>/dev/null)"
+	[[ -z ${pkg} ]] && pkg="$(dpkg -S "${ldds[@]#'/usr'}" 2>/dev/null)"
+	pkg="${pkg%%[:,]*}"
+	;;
+'dnf'|'yum')
+	pkg="$(rpm -qf --qf '%{NAME}\n' "${ldds[@]}" 2>/dev/null)"
+	;;
+'pacman')
+	pkg="$(pacman -Qoq "${ldds[@]}" 2>/dev/null)"
+	;;
+'pkg')
+	pkg="$(pkg which -q "${ldds[@]}" 2>/dev/null)"
+	pkg="${pkg%-*}"
+	;;
+esac
 pause 0
 
 
