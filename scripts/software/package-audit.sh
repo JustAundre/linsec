@@ -46,7 +46,6 @@ services=(
 	mysql mariadb postgresql redis memcached mongodb rabbitmq-server
 	squid vsftpd proftpd pure-ftpd bind9 openldap-server samba nmbd dovecot
 )
-declare identified_pkgs=() unidentified_pkgs=()
 
 
 
@@ -97,7 +96,7 @@ mapfile -t paths < <(which "${services[@]}" 2>/dev/null | xargs realpath)
 for path in "${paths[@]}"; do
 	pkg_owner "${path}"
 	if [[ -n ${pkg} ]]; then
-		identified_pkgs+=("${pkg}")
+		identified_services+=("${pkg}")
 	fi
 done
 
@@ -110,7 +109,7 @@ done
 #
 mapfile -t -d '' selections_1 < <(PS2='Select identified potentially unwanted software to remove' cl-new -m -o "${identified_pkgs[@]}")
 mapfile -t -d '' selections_2 < <(PS2='Select binaries with no associated package to remove' cl-new -m -o "${unidentified_pkgs[@]}")
-mapfile -t -d '' selections_3 < <(PS2='Select services to remove' cl-new -m -o "${services[@]}")
+mapfile -t -d '' selections_3 < <(PS2='Select services to remove' cl-new -m -o "${identified_services[@]}")
 ((${#selections_1[@]} + ${#selections_2[@]} + ${#selections_3[@]})) && for selection in "${selections_1[@]}" "${selections_2[@]}" "${selections_3[@]}"; do
 	case "${pkg_backend}" in
 	'apt-get')
