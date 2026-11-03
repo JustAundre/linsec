@@ -8,7 +8,6 @@
 # Environment Setup
 #
 pkg_owner() {
-	local pkg=''
 	case "${pkg_backend}" in
 	'apt-get')
 		pkg="$(dpkg -S "${1}" 2>/dev/null)"
@@ -26,7 +25,6 @@ pkg_owner() {
 		pkg="${pkg%-*}"
 		;;
 	esac
-	echo "${pkg}"
 }
 export -f pkg_owner
 badware=(
@@ -58,10 +56,9 @@ declare identified_pkgs=() unidentified_pkgs=()
 # Identify Common Unauthorized Software
 #
 log i 'Querying for common unauthorized software (this will take a while)...'
-for bin in "${badware[@]}" "${crackers[@]}"; do
-	hash "${bin}" &>/dev/null || continue
-	path="$(realpath "$(command -v "${bin}")")"
-	pkg="$(pkg_owner "${path}")"
+mapfile -t paths < <(which "${badware[@]}" "${crackers[@]}" 2>/dev/null | xargs realpath)
+for path in "${paths[@]}"; do
+	pkg_owner "${path}"
 	if [[ -n ${pkg} ]]; then
 		# Package identified by package manager
 		identified_pkgs+=("${pkg}")
@@ -78,7 +75,7 @@ done
 log i 'Querying for binaries with no associated package (this will take a while)...'
 mapfile -t -d ':' PATH_array <<<"${PATH}"
 while IFS='' read -r -d '' bin; do
-	pkg="$(pkg_owner "${bin}")"
+	pkg_owner "${path}"
 	if [[ -z ${pkg} ]]; then
 		# Binary not associated with any package
 		unidentified_pkgs+=("${bin}")
@@ -96,10 +93,9 @@ done < <(
 # Identify Services
 #
 log i 'Querying for common services (this will take a while)...'
-for bin in "${services[@]}"; do
-	hash "${bin}" &>/dev/null || continue
-	path="$(realpath "$(command -v "${bin}")")"
-	pkg="$(pkg_owner "${path}")"
+mapfile -t paths < <(which "${services[@]}" 2>/dev/null | xargs realpath)
+for path in "${paths[@]}"; do
+	pkg_owner "${path}"
 	if [[ -n ${pkg} ]]; then
 		identified_pkgs+=("${pkg}")
 	fi

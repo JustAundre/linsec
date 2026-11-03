@@ -23,4 +23,10 @@ for category in ./cnf/sysctl/*; do
 		install -m 600 -o 0 -g 0 -D -v "${selection}.conf" "/etc/sysctl.d/99-zz-${name@L}.conf"
 	done
 done
-sysctl --system >/dev/null
+confirm 'Disable main sysctl configuration file' &&
+	mv -v /etc/sysctl.conf /etc/sysctl.conf.bak
+if sysctl --system >/dev/null; then
+	log i 'Sysctl parameters applied successfully'
+else
+	log w 'Sysctl returned an error.'
+fi
