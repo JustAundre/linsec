@@ -67,7 +67,7 @@ declare -A id_bounds=(
 	[SYS_GID_MAX]=999
 )
 while IFS=' ' read -r -d $'\n' key value; do
-	id_bounds["${key}"]="${value}"
+	id_bounds["${key#'#'}"]="${value}"
 done < <(awk '/^#?[[:space:]]*(SYS_)?(U|G)ID_(MIN|MAX)/ {print $1, $2}' /etc/login.defs)
 mapfile -t passwd < /etc/passwd
 mapfile -t group < /etc/group
