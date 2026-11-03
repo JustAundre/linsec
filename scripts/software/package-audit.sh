@@ -34,7 +34,7 @@ badware=(
 	finger in.fingerd talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
 	showmount snmpd smbd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
 	vncserver xrdp transmission-gtk deluge aisleriot gnome-mines freeciv
-	minetest sshpass
+	minetest sshpass doona xproble
 )
 crackers=(
 	nmap ncat nc socat cryptcat masscan zmap hping3 netdiscover arp-scan
@@ -42,6 +42,11 @@ crackers=(
 	crunch cewl crack wireshark tshark tcpdump ettercap dsniff sslstrip
 	yersinia macchanger aircrack-ng kismet reaver wifite nikto sqlmap
 	wpscan dirb gobuster wfuzz burpsuite zaproxy msfconsole proxychains tor
+)
+services=(
+	apache2 httpd nginx lighttpd tomcat tomcat9 jetty nodejs php-fpm
+	mysql mariadb postgresql redis memcached mongodb rabbitmq-server
+	squid vsftpd proftpd pure-ftpd bind9 openldap-server samba nmbd dovecot
 )
 declare identified_pkgs=() unidentified_pkgs=()
 
@@ -80,6 +85,22 @@ done < <(
 	find "${PATH_array[@]}" -type f -executable -exec realpath -z {} + |
 		sort -uz
 )
+
+
+
+
+
+#
+# Identify Services
+#
+for bin in "${services[@]}"; do
+	hash "${bin}" &>/dev/null || continue
+	path="$(realpath "$(command -v "${bin}")")"
+	pkg="$(pkg_owner "${path}")"
+	if [[ -n ${pkg} ]]; then
+		identified_pkgs+=("${pkg}")
+	fi
+done
 
 
 
