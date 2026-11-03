@@ -87,7 +87,7 @@ for selection in "${selections[@]}"; do
 	done
 	case "${key}" in
 	debian:minlen)
-		if grep -q -E 'pam_unix\.so.+minlen=' /usr/share/pam-configs/common-password; then
+		if grep -q -E 'pam_unix\.so.+minlen=' /usr/share/pam-configs/unix; then
 			log w 'A minimum password length is already being enforced.'
 			confirm 'Continue anyway' || continue
 		fi
@@ -98,7 +98,22 @@ for selection in "${selections[@]}"; do
 			[[ -z ${response} ]] && response=14
 			[[ ! ${response} =~ ^[0-9]+$ ]] && log e 'Please enter a valid positive integer.'
 		done
-		sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /usr/share/pam-configs/common-password &&
+		sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	minlen=${response}${sed_delim}" /usr/share/pam-configs/unix &&
+			log i "Minimum password length set to ${response}."
+		;;
+	debian:remember)
+		if grep -q -E 'pam_unix\.so.+remember=' /usr/share/pam-configs/unix; then
+			log w 'A minimum password length is already being enforced.'
+			confirm 'Continue anyway' || continue
+		fi
+		echo 'Enter a minimum password length (default 14):'
+		response=''
+		while [[ ! ${response} =~ ^[0-9]+$ ]]; do
+			read -e -r -p '> ' response
+			[[ -z ${response} ]] && response=14
+			[[ ! ${response} =~ ^[0-9]+$ ]] && log e 'Please enter a valid positive integer.'
+		done
+		sed -i "\\${sed_delim}pam_unix\.so${sed_delim}s${sed_delim}\$${sed_delim}	remember=${response}${sed_delim}" /usr/share/pam-configs/unix &&
 			log i "Minimum password length set to ${response}."
 		;;
 	debian:nonullok)
