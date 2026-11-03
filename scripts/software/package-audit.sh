@@ -30,7 +30,7 @@ export -f pkg_owner
 badware=(
 	telnet in.telnetd rsh rwho rusers ftp tftp in.tftpd finger
 	talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
-	snmpd smbd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
+	snmpd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
 	xrdp transmission-gtk xprobe2 vncserver showmount in.fingerd
 )
 crackers=(
