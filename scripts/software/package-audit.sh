@@ -28,23 +28,22 @@ pkg_owner() {
 }
 export -f pkg_owner
 badware=(
-	telnet telnetd rsh rwho rusers ftp tftp in.tftpd proftpd pure-ftpd
-	finger in.fingerd talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
-	showmount snmpd smbd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
-	vncserver xrdp transmission-gtk deluge aisleriot gnome-mines freeciv
-	minetest sshpass doona xproble
+	telnet in.telnetd rsh rwho rusers ftp tftp in.tftpd finger
+	talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
+	snmpd smbd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
+	xrdp transmission-gtk xprobe2 vncserver showmount in.fingerd
 )
 crackers=(
 	nmap ncat nc socat cryptcat masscan zmap hping3 netdiscover arp-scan
-	john hashcat hydra medusa ncrack ophcrack fcrackzip pdfcrack
-	crunch cewl crack wireshark tshark tcpdump ettercap dsniff sslstrip
-	yersinia macchanger aircrack-ng kismet reaver wifite nikto sqlmap
-	wpscan dirb gobuster wfuzz burpsuite zaproxy msfconsole proxychains tor
+	john hashcat hydra medusa ncrack ophcrack fcrackzip pdfcrack doona
+	crunch cewl Crack wireshark tshark tcpdump ettercap dsniff sslstrip
+	yersinia macchanger aircrack-ng kismet reaver wifite nikto sqlmap sshpass
+	wpscan dirb gobuster wfuzz burpsuite zaproxy msfconsole proxychains4 tor
 )
 services=(
-	apache2 httpd nginx lighttpd tomcat tomcat9 jetty nodejs php-fpm
-	mysql mariadb postgresql redis memcached mongodb rabbitmq-server
-	squid vsftpd proftpd pure-ftpd bind9 openldap-server samba nmbd dovecot
+	apache2 httpd nginx lighttpd catalina.sh jetty.sh node php-fpm
+	mysqld mariadbd postgres redis-server memcached mongod rabbitmq-server
+	squid vsftpd proftpd pure-ftpd named slapd smbd nmbd dovecot
 )
 
 
