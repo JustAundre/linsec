@@ -54,7 +54,7 @@ declare identified_pkgs=() unidentified_pkgs=()
 #
 for bin in "${badware[@]}" "${crackers[@]}"; do
 	hash "${bin}" &>/dev/null || continue
-	path="$(readlink -f "$(command -v "${bin}")")"
+	path="$(realpath "$(command -v "${bin}")")"
 	pkg="$(pkg_owner "${path}")"
 	if [[ -n ${pkg} ]]; then
 		# Package identified by package manager
