@@ -57,6 +57,7 @@ declare identified_pkgs=() unidentified_pkgs=()
 #
 # Identify Common Unauthorized Software
 #
+log i 'Querying for common unauthorized software (this will take a while)...'
 for bin in "${badware[@]}" "${crackers[@]}"; do
 	hash "${bin}" &>/dev/null || continue
 	path="$(realpath "$(command -v "${bin}")")"
@@ -74,6 +75,7 @@ done
 #
 # Identify Binaries with No Associated Package
 #
+log i 'Querying for binaries with no associated package (this will take a while)...'
 mapfile -t -d ':' PATH_array <<<"${PATH}"
 while IFS='' read -r -d '' bin; do
 	pkg="$(pkg_owner "${bin}")"
@@ -93,6 +95,7 @@ done < <(
 #
 # Identify Services
 #
+log i 'Querying for common services (this will take a while)...'
 for bin in "${services[@]}"; do
 	hash "${bin}" &>/dev/null || continue
 	path="$(realpath "$(command -v "${bin}")")"
@@ -111,7 +114,8 @@ done
 #
 mapfile -t -d '' selections_1 < <(PS2='Select identified potentially unwanted software to remove' cl-new -m -o "${identified_pkgs[@]}")
 mapfile -t -d '' selections_2 < <(PS2='Select binaries with no associated package to remove' cl-new -m -o "${unidentified_pkgs[@]}")
-((${#selections_1[@]} + ${#selections_2[@]})) && for selection in "${selections_1[@]}" "${selections_2[@]}"; do
+mapfile -t -d '' selections_3 < <(PS2='Select services to remove' cl-new -m -o "${services[@]}")
+((${#selections_1[@]} + ${#selections_2[@]} + ${#selections_3[@]})) && for selection in "${selections_1[@]}" "${selections_2[@]}" "${selections_3[@]}"; do
 	case "${pkg_backend}" in
 	'apt-get')
 		"${pkg_backend}" remove --purge -y "${selection}"
