@@ -28,7 +28,7 @@ pkg_owner() {
 }
 export -f pkg_owner
 badware=(
-	telnet telnetd rsh rwho rusers ftp tftp in.tftpd vsftpd proftpd pure-ftpd
+	telnet telnetd rsh rwho rusers ftp tftp in.tftpd proftpd pure-ftpd
 	finger in.fingerd talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
 	showmount snmpd smbd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
 	vncserver xrdp transmission-gtk deluge aisleriot gnome-mines freeciv
