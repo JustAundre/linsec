@@ -1,0 +1,21 @@
+# Main Repos
+deb http://archive.ubuntu.com/ubuntu/ CODENAME main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ CODENAME main restricted universe multiverse
+
+# Update Repos
+deb http://archive.ubuntu.com/ubuntu/ CODENAME-security main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ CODENAME-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ CODENAME-proposed main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ CODENAME-backports main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ CODENAME-security main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ CODENAME-updates main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ CODENAME-proposed main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ CODENAME-backports main restricted universe multiverse
+
+# Partner Repo
+deb http://archive.canonical.com/ubuntu CODENAME partner
+deb-src http://archive.canonical.com/ubuntu CODENAME partner
+
+# Extras Repo
+deb http://extras.ubuntu.com/ubuntu CODENAME main
+deb-src http://extras.ubuntu.com/ubuntu CODENAME main

@@ -11,13 +11,13 @@ confirm 'Reset package manager sources' && case "${os_info[ID]}" in
 'ubuntu'|'debian')
 	mv -v /etc/apt/sources.list{,".bak.$(date +%s)"}
 	install -p -v -m 640 -o 0 -g 0\
-		<(sed "s${sed_delim}CODENAME${sed_delim}$(lsb_release -c -s)${sed_delim}" "cnf/sources/${os_info[ID]}.txt")\
+		<(sed "s${sed_delim}CODENAME${sed_delim}$(lsb_release -c -s)${sed_delim}" "cnf/sources/${os_info[ID]}.repo")\
 		/etc/apt/sources.list
 	;;
 'linuxmint')
 	mv -v /etc/apt/sources.list{,".bak.$(date +%s)"}
 	install -p -v -m 640 -o 0 -g 0\
-		<(sed "s${sed_delim}CODENAME${sed_delim}${os_info[UBUNTU_CODENAME]}${sed_delim}" cnf/sources/ubuntu.txt)\
+		<(sed "s${sed_delim}CODENAME${sed_delim}${os_info[UBUNTU_CODENAME]}${sed_delim}" cnf/sources/ubuntu.repo)\
 		/etc/apt/sources.list
 	;;
 'rhel'|'centos')
