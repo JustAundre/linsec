@@ -73,7 +73,7 @@ done
 log i 'Querying for binaries with no associated package (this will take a while)...'
 mapfile -t -d ':' PATH_array <<<"${PATH}"
 while IFS='' read -r -d '' bin; do
-	pkg_owner "${path}"
+	pkg_owner "${bin}"
 	if [[ -z ${pkg} ]]; then
 		# Binary not associated with any package
 		unidentified_pkgs+=("${bin}")
