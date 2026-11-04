@@ -11,7 +11,7 @@ pkg_owner() {
 	case "${pkg_backend}" in
 	'apt-get')
 		pkg="$(dpkg -S "${1}" 2>/dev/null)"
-		[[ -z ${pkg} ]] && pkg="$(dpkg -S "${1#'/usr'}" 2>/dev/null)"
+		[[ -z ${pkg} && ${1} == '/usr/'* ]] && pkg="$(dpkg -S "${1#'/usr'}" 2>/dev/null)"
 		pkg="${pkg%%[:,]*}"
 		;;
 	'dnf'|'yum')
