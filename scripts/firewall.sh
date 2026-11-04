@@ -11,11 +11,17 @@ else
 fi
 case "${selection}" in
 *'(UFW)'*)
-	xargs -n 1 modprobe <<<'ip_tables iptable_filter'
+	for module in ip_tables iptable_filter; do
+		modprobe "${module}" &&
+			log i "${module} kernel module is loaded."
+	done
 	mv -v /etc/ufw{,'.bak'}
 	case "${pkg_backend}" in
 	'apt-get')
-		"${pkg_backend}" install --reinstall -y ufw -o Dpkg::Options::='--force-confnew' -o Dpkg::Options::='--force-confmiss'
+		"${pkg_backend}" install --reinstall -y\
+			-o Dpkg::Options::='--force-confnew'\
+			-o Dpkg::Options::='--force-confmiss'\
+			ufw
 		;;
 	'dnf'|'yum')
 		"${pkg_backend}" install -y ufw

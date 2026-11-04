@@ -39,7 +39,10 @@ esac
 #
 [[ ${init} == 'systemd' ]] && case "${pkg_backend}" in
 'apt-get')
-	"${pkg_backend}" install -y unattended-upgrades apt-listchanges
+	"${pkg_backend}" install --reinstall -y\
+		-o Dpkg::Options::='--force-confnew'\
+		-o Dpkg::Options::='--force-confmiss'\
+		unattended-upgrades apt-listchanges
 	install -p -v -m 640 -o 0 -g 0 cnf/50unattended-upgrades /etc/apt/apt.conf.d/50unattended-upgrades
 	install -p -v -m 640 -o 0 -g 0 cnf/20auto-upgrades /etc/apt/apt.conf.d/20auto-upgrades
 	dpkg-reconfigure --priority=low unattended-upgrades
