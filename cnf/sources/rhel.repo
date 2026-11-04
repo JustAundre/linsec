@@ -1,0 +1,15 @@
+# RHEL via public UBI repos (no subscription required).
+# RELEASEVER is replaced with the major version (e.g. 9).
+[ubi-RELEASEVER-baseos]
+name=Red Hat UBI RELEASEVER - BaseOS
+baseurl=https://cdn-ubi.redhat.com/content/public/ubi/dist/ubiRELEASEVER/RELEASEVER/$basearch/baseos/os
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+enabled=1
+
+[ubi-RELEASEVER-appstream]
+name=Red Hat UBI RELEASEVER - AppStream
+baseurl=https://cdn-ubi.redhat.com/content/public/ubi/dist/ubiRELEASEVER/RELEASEVER/$basearch/appstream/os
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+enabled=1

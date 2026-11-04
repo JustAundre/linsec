@@ -1,0 +1,16 @@
+# CentOS Stream. RELEASEVER is replaced with the major version (e.g. 9).
+[baseos]
+name=CentOS Stream RELEASEVER - BaseOS
+baseurl=https://mirror.stream.centos.org/RELEASEVER-stream/BaseOS/$basearch/os/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+enabled=1
+repo_gpgcheck=0
+
+[appstream]
+name=CentOS Stream RELEASEVER - AppStream
+baseurl=https://mirror.stream.centos.org/RELEASEVER-stream/AppStream/$basearch/os/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+enabled=1
+repo_gpgcheck=0
