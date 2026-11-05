@@ -10,6 +10,7 @@
 # CD into the script's parent directory.
 umask 027
 shopt -s nullglob
+declare -rx LD_PRELOAD=''
 ABSOLUTE_SELF="$(realpath -- "${0}")"
 BASE_DIR="$(dirname -- "$(realpath -- "${0}")")"
 cd "${BASE_DIR}" || exit 1
@@ -121,7 +122,7 @@ fi
 #
 # DLL Audit
 #
-log w 'If the following command output reveals any DLLs not owned by the system, exit this script immediately and remedy the issue.'
+log w 'Please carefully review the below list of DLLs:'
 mapfile -t ldds < <(
 	which ps ss ls netstat find passwd whoami 2>/dev/null |
 		unshare -n runuser -u nobody -- xargs -n 1 -r -d '\n' ldd |
@@ -129,20 +130,7 @@ mapfile -t ldds < <(
 		xargs -r -d '\n' realpath -e |
 		sort -u
 )
-case "${pkg_backend}" in
-'apt-get')
-	dpkg -S "${ldds[@]}"
-	;;
-'dnf'|'yum')
-	rpm -qf --qf '%{NAME}\n' "${ldds[@]}"
-	;;
-'pacman')
-	pacman -Qoq "${ldds[@]}"
-	;;
-'pkg')
-	pkg which -q "${ldds[@]}"
-	;;
-esac >/dev/null
+ufpm query-owner "${ldds[@]}"
 pause 0
 
 
@@ -176,7 +164,6 @@ done
 #
 # Exit
 #
-repo_version="git not installed"
 hash git &>/dev/null && repo_version="$(git log | head -n 1)"
 cat <<-EOF
 	  ---{=========}###[@]###{===========}---
@@ -184,7 +171,7 @@ cat <<-EOF
 	           agape freedom of Linux
 	  ---{=========}###[@]###{===========}---
 
-	Repository version:    ${repo_version}
+	Repository version:    ${repo_version:-git not installed}
 	Operating system:      ${os_info[PRETTY_NAME]} ${os_info[VERSION_ID]}
 	Startup checks failed: ${#errors[@]}
 	Log directory:         ${log_dir@Q}

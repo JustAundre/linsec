@@ -7,43 +7,26 @@
 #
 # Environment Setup
 #
-pkg_owner() {
-	case "${pkg_backend}" in
-	'apt-get')
-		pkg="$(dpkg -S "${1}" 2>/dev/null)"
-		[[ -z ${pkg} && ${1} == '/usr/'* ]] && pkg="$(dpkg -S "${1#'/usr'}" 2>/dev/null)"
-		pkg="${pkg%%[:,]*}"
-		;;
-	'dnf'|'yum')
-		pkg="$(rpm -qf --qf '%{NAME}\n' "${1}" 2>/dev/null)"
-		;;
-	'pacman')
-		pkg="$(pacman -Qoq "${1}" 2>/dev/null)"
-		;;
-	'pkg')
-		pkg="$(pkg which -q "${1}" 2>/dev/null)"
-		pkg="${pkg%-*}"
-		;;
-	esac
-}
-export -f pkg_owner
+# Note: not package names--theyre binaries.
 badware=(
 	telnet in.telnetd rsh rwho rusers ftp tftp in.tftpd finger
 	talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
 	snmpd pptpd sendmail cups-browsed bluetoothd nscd x11vnc
 	xrdp transmission-gtk xprobe2 vncserver showmount in.fingerd
+	vsftpd proftpd pure-ftpd
 )
 crackers=(
-	nmap ncat nc socat cryptcat masscan zmap hping3 netdiscover arp-scan
-	john hashcat hydra medusa ncrack ophcrack fcrackzip pdfcrack doona
-	crunch cewl Crack wireshark tshark tcpdump ettercap dsniff sslstrip
-	yersinia macchanger aircrack-ng kismet reaver wifite nikto sqlmap sshpass
-	wpscan dirb gobuster wfuzz burpsuite zaproxy msfconsole proxychains4 tor
+	nmap ncat nc socat cryptcat masscan zmap hping3 netdiscover
+	arp-scan john hashcat hydra medusa ncrack ophcrack fcrackzip
+	pdfcrack doona crunch cewl Crack wireshark tshark tcpdump
+	ettercap dsniff sslstrip yersinia macchanger aircrack-ng
+	reaver wifite nikto sqlmap sshpass wpscan dirb gobuster
+	burpsuite zaproxy msfconsole proxychains4 tor kismet wfuzz
 )
 services=(
-	apache2 httpd nginx lighttpd catalina.sh jetty.sh node php-fpm
-	mysqld mariadbd postgres redis-server memcached mongod rabbitmq-server
-	squid vsftpd proftpd pure-ftpd named slapd smbd nmbd dovecot
+	apache2 httpd nginx lighttpd catalina.sh jetty.sh php-fpm
+	mysqld mariadbd postgres redis-server memcached mongod
+	squid named slapd smbd nmbd dovecot rabbitmq-server node
 )
 
 
@@ -56,7 +39,7 @@ services=(
 log i 'Querying for common unauthorized software (this will take a while)...'
 mapfile -t paths < <(which "${badware[@]}" "${crackers[@]}" 2>/dev/null | xargs realpath)
 for path in "${paths[@]}"; do
-	pkg_owner "${path}"
+	ufpm query-owner "${path}"
 	if [[ -n ${pkg} ]]; then
 		# Package identified by package manager
 		identified_pkgs+=("${pkg}")
@@ -73,7 +56,7 @@ done
 log i 'Querying for binaries with no associated package (this will take a while)...'
 mapfile -t -d ':' PATH_array <<<"${PATH}"
 while IFS='' read -r -d '' bin; do
-	pkg_owner "${bin}"
+	ufpm query-owner "${bin}"
 	if [[ -z ${pkg} ]]; then
 		# Binary not associated with any package
 		unidentified_pkgs+=("${bin}")
@@ -93,7 +76,7 @@ done < <(
 log i 'Querying for common services (this will take a while)...'
 mapfile -t paths < <(which "${services[@]}" 2>/dev/null | xargs realpath)
 for path in "${paths[@]}"; do
-	pkg_owner "${path}"
+	ufpm query-owner "${path}"
 	if [[ -n ${pkg} ]]; then
 		identified_services+=("${pkg}")
 	fi
