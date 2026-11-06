@@ -29,7 +29,7 @@ until hash "${EDITOR}" &>/dev/null; do
 	read -e -r -p 'Type a text editor and hit [ENTER] to confirm: ' EDITOR
 done
 #
-# Performance optimizations--not strictly necessary but great to have enabled.
+# Performance optimizations—not strictly necessary but great to have enabled.
 for cmd in cut head logname mkfifo mktmp realpath seq sleep tee tty uname ln unlink whoami; do
 	path="/usr/lib/bash/${cmd}"
 	[[ -f ${path} ]] || continue

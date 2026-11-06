@@ -7,7 +7,7 @@
 #
 # Environment Setup
 #
-# Note: not package names--theyre binaries.
+# Note: not package names—theyre binaries.
 badware=(
 	telnet in.telnetd rsh rwho rusers ftp tftp in.tftpd finger
 	talk in.talkd inetd xinetd rpcbind ypserv ypbind exportfs
